@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import dynamic from "next/dynamic"
-// Áudio removido - import { audioManager } from "./AudioManager"
 import { ParticleSystem } from "./ParticleSystem"
 import { BackgroundRenderer } from "./BackgroundRenderer"
 import { HUD } from "./HUD"
@@ -17,7 +16,6 @@ interface GameComponentProps {
   initialScore: number
 }
 
-// Classe do jogador melhorada
 class Player {
   public position: any
   public velocity: any
@@ -77,7 +75,6 @@ class Player {
     this.isBlinking = false
     this.sweatDrops = []
 
-    // Cores melhoradas
     this.skinColor = type === "player" ? p5.color(255, 220, 177) : p5.color(220, 180, 140)
     this.trunkColor = type === "player" ? p5.color(255, 0, 0) : p5.color(0, 0, 255)
     this.gloveColor = type === "player" ? p5.color(255, 0, 0) : p5.color(0, 0, 255)
@@ -118,7 +115,6 @@ class Player {
       }
     }
 
-    // Atualiza cooldowns
     if (this.punchCooldown > 0) {
       this.punchCooldown--
     }
@@ -130,23 +126,19 @@ class Player {
       }
     }
 
-    // Efeitos visuais
     this.updateVisualEffects()
 
-    // Constrain to canvas
     this.position.x = this.p5.constrain(this.position.x, 100, 700)
     this.position.y = this.p5.constrain(this.position.y, 200, 450)
   }
   updateVisualEffects() {
     this.breathingOffset = Math.sin(this.p5.frameCount * 0.05) * 2
     
-    // Subtle arm breathing animation when not punching
     if (!this.isPunching) {
       const armBreathing = Math.sin(this.p5.frameCount * 0.03) * 2
       this.leftArm.y = armBreathing
       this.rightArm.y = armBreathing
       
-      // Slight arm sway for natural movement
       const armSway = Math.sin(this.p5.frameCount * 0.02) * 1
       this.leftArm.x = -20 + armSway
       this.rightArm.x = 20 - armSway
@@ -158,7 +150,6 @@ class Player {
       this.blinkTimer = this.isBlinking ? 5 : this.p5.floor(this.p5.random(60, 180))
     }
 
-    // Adiciona gotas de suor
     if ((this.isPunching || this.isHit) && this.p5.random() < 0.3) {
       this.sweatDrops.push({
         x: this.p5.random(-20, 20),
@@ -170,7 +161,6 @@ class Player {
       })
     }
 
-    // Atualiza gotas de suor
     for (let i = this.sweatDrops.length - 1; i >= 0; i--) {
       const drop = this.sweatDrops[i]
       drop.x += drop.vx
@@ -202,7 +192,6 @@ class Player {
     }
   }
   animateJab(progress: number) {
-    // Movimento mais realista com aceleração e desaceleração
     const easeInOut = progress < 0.5 
       ? 2 * progress * progress 
       : 1 - Math.pow(-2 * progress + 2, 2) / 2
@@ -863,12 +852,15 @@ export default function GameComponent({
     // Inicializa jogadores
     playerRef.current = new Player(p5, 200, 350, "player")
     enemyRef.current = new Enemy(p5, 600, 350, "enemy", round)
-    
-    // Inicializa sistemas
+      // Inicializa sistemas
     particleSystemRef.current = new ParticleSystem(p5)
     backgroundRef.current = new BackgroundRenderer(p5)
     hudRef.current = new HUD(p5)
-      // Inicia música do jogo - áudio removido
+    
+    // Sinaliza início do round
+    backgroundRef.current.onRoundStart()
+    
+    // Inicia música do jogo - áudio removido
     // audioManager.playGameMusic()
     // audioManager.playCrowd()
   }
@@ -891,10 +883,41 @@ export default function GameComponent({
     }
     if (p5.keyIsDown(p5.DOWN_ARROW) || p5.keyIsDown(83)) { // S
       player.velocity.y = player.moveSpeed
+    }    player.position.add(player.velocity)
+  }
+  const endGame = (player: Player, enemy: Player) => {
+    if (gameEnded) return
+    setGameEnded(true)
+    
+    // Sinaliza fim do round
+    backgroundRef.current?.onRoundEnd()
+ 
+    let result: string
+    if (player.health <= 0) {
+      result = "enemy" // Player perdeu
+      particleSystemRef.current?.addKnockoutEffect(player.position.x, player.position.y)
+      backgroundRef.current?.onKnockdown()
+    } else if (enemy.health <= 0) {
+      result = "player" // Player venceu
+      particleSystemRef.current?.addKnockoutEffect(enemy.position.x, enemy.position.y)
+      backgroundRef.current?.onKnockdown()
+      backgroundRef.current?.flashArenaLights()
+    } else {
+      if (player.health > enemy.health) {
+        result = "player" // Player venceu por pontos
+        backgroundRef.current?.flashArenaLights()
+      } else if (enemy.health > player.health) {
+        result = "enemy" // Player perdeu por pontos
+      } else {
+        result = "draw" // Empate
+      }
     }
 
-    player.position.add(player.velocity)
+    setTimeout(() => {
+      onGameOver(result, score)
+    }, 2000)
   }
+
   const draw = (p5: any) => {
     if (gameEnded) return
 
@@ -904,26 +927,21 @@ export default function GameComponent({
     const background = backgroundRef.current!
     const hud = hudRef.current!
 
-    // Controles de movimento do jogador
     handlePlayerMovement(p5, player)
-
-    // Atualiza sistemas
+    
     player.update()
     enemy.updateAI(player.position)
     particles.update()
     background.update()
     hud.update()
 
-    // Verificar colisões de soco
     checkPunchCollisions(player, enemy, particles, hud)
 
-    // Verificar fim de jogo
     if (player.health <= 0 || enemy.health <= 0 || hud.getTimeRemaining() <= 0) {
       endGame(player, enemy)
       return
     }
 
-    // Desenhar tudo
     background.draw()
     player.draw()
     enemy.draw()
@@ -942,7 +960,7 @@ export default function GameComponent({
     enemy: Enemy,
     particles: ParticleSystem,
     hud: HUD
-  ) => {    // Verifica soco do jogador no inimigo
+  ) => {   
     if (player.isPunchActive()) {
       const punchPos = player.getPunchPosition()
       const distance = player.p5.dist(
@@ -950,18 +968,16 @@ export default function GameComponent({
         enemy.position.x, enemy.position.y
       )
 
-      // Distância mais realista baseada no tipo de golpe
       let hitRange;
       switch (player.punchType) {
-        case "jab": hitRange = 45; break;     // Alcance maior, golpe direto
-        case "cross": hitRange = 50; break;  // Alcance máximo, golpe de poder
-        case "hook": hitRange = 35; break;   // Alcance menor, golpe lateral
-        case "uppercut": hitRange = 30; break; // Alcance mínimo, golpe por baixo
+        case "jab": hitRange = 45; break;    
+        case "cross": hitRange = 50; break;  
+        case "hook": hitRange = 35; break;   
+        case "uppercut": hitRange = 30; break; 
         default: hitRange = 40;
       }
 
-      if (distance < hitRange) {
-        const damage = player.getPunchDamage()
+      if (distance < hitRange) {        const damage = player.getPunchDamage()
         enemy.takeDamage(damage, player.punchType)
         
         particles.addHitEffect(enemy.position.x, enemy.position.y, damage)
@@ -973,12 +989,19 @@ export default function GameComponent({
         hud.addScorePopup(enemy.position.x, enemy.position.y, points, "hit")
         hud.addDamage(false)
         
+        // Integração com BackgroundRenderer
+        backgroundRef.current?.onPunchLanded(damage / 30) // Normaliza intensidade
+        if (enemy.isKnockedOut) {
+          backgroundRef.current?.onKnockdown()
+        }
+        
         backgroundRef.current?.addCameraShake(5, 10)
-        backgroundRef.current?.setCrowdExcitement(0.8)
-
-        player.isPunching = false // Evita múltiplos hits
+        backgroundRef.current?.setCrowdExcitement(0.8)        
+        player.isPunching = false
       }
-    }    // Verifica soco do inimigo no jogador
+    }
+    
+    // Verifica soco do inimigo no jogador
     if (enemy.isPunchActive()) {
       const punchPos = enemy.getPunchPosition()
       const distance = enemy.p5.dist(
@@ -986,7 +1009,6 @@ export default function GameComponent({
         player.position.x, player.position.y
       )
 
-      // Distância mais realista baseada no tipo de golpe do inimigo
       let hitRange;
       switch (enemy.punchType) {
         case "jab": hitRange = 45; break;
@@ -996,8 +1018,7 @@ export default function GameComponent({
         default: hitRange = 40;
       }
 
-      if (distance < hitRange) {
-        const damage = enemy.getPunchDamage()
+      if (distance < hitRange) {        const damage = enemy.getPunchDamage()
         player.takeDamage(damage, enemy.punchType)
         
         particles.addHitEffect(player.position.x, player.position.y, damage)
@@ -1006,70 +1027,39 @@ export default function GameComponent({
         hud.addDamage(true)
         hud.resetCombo()
         
+        // Integração com BackgroundRenderer
+        backgroundRef.current?.onPunchLanded(damage / 30) // Normaliza intensidade
+        if (player.isKnockedOut) {
+          backgroundRef.current?.onKnockdown()
+        }
+        
         backgroundRef.current?.addCameraShake(3, 8)
-
-        enemy.isPunching = false // Evita múltiplos hits
+        enemy.isPunching = false
       }
-    }
-  }
-
-  const endGame = (player: Player, enemy: Player) => {
-    if (gameEnded) return
-      setGameEnded(true)
-    // audioManager.stopAllMusic() - áudio removido
-    // audioManager.stopCrowd() - áudio removido
-
-    let result: string
-    if (player.health <= 0) {
-      result = "Você foi nocauteado!"
-      particleSystemRef.current?.addKnockoutEffect(player.position.x, player.position.y)
-    } else if (enemy.health <= 0) {
-      result = "Vitória por nocaute!"
-      particleSystemRef.current?.addKnockoutEffect(enemy.position.x, enemy.position.y)
-      // audioManager.playBell() - áudio removido
-    } else {
-      // Decisão por pontos
-      if (player.health > enemy.health) {
-        result = "Vitória por pontos!"
-      } else if (enemy.health > player.health) {
-        result = "Derrota por pontos!"
-      } else {
-        result = "Empate!"
-      }
-    }
-
-    setTimeout(() => {
-      onGameOver(result, score)
-    }, 2000)
-  }
+    }  }
+  
   const keyPressed = (p5: any) => {
     const player = playerRef.current
     if (!player || gameEnded) return
 
     switch (p5.key.toLowerCase()) {
-      case 'q':
+      case ' ': // SPACE
         player.punch("jab")
         break
-      case 'w':
+      case 'c':
         player.punch("cross")
         break
-      case 'e':
+      case 'z':
         player.punch("hook")
         break
-      case 'r':
+      case 'x':
         player.punch("uppercut")
         break
     }
   }
-  useEffect(() => {
-    return () => {
-      // audioManager.stopAllMusic() - áudio removido
-      // audioManager.stopCrowd() - áudio removido
-    }
-  }, [])
+ 
   return (
     <div className="flex flex-col h-screen bg-black">
-      {/* Status Bar Superior */}
       <div className="flex justify-between items-center px-6 py-2 bg-gray-900 border-b border-gray-700">
         <div className="text-white">
           <span className="text-lg font-bold">Round {round}</span>
@@ -1083,7 +1073,6 @@ export default function GameComponent({
         </div>
       </div>
 
-      {/* Área de Jogo */}
       <div className="flex-1 relative overflow-hidden">
         <Sketch
           setup={setup}
@@ -1092,19 +1081,17 @@ export default function GameComponent({
         />
       </div>
 
-      {/* Controles na parte inferior */}
       <div className="bg-gray-900 border-t border-gray-700 px-6 py-3">
         <div className="flex justify-center items-center space-x-8 text-white text-sm">
           <div className="flex items-center space-x-4">
             <span className="font-semibold text-gray-300">Movimento:</span>
             <span>WASD ou Setas</span>
-          </div>
-          <div className="flex items-center space-x-4">
+          </div>          <div className="flex items-center space-x-4">
             <span className="font-semibold text-gray-300">Golpes:</span>
-            <span>Q (Jab)</span>
-            <span>W (Cross)</span>
-            <span>E (Hook)</span>
-            <span>R (Uppercut)</span>
+            <span>SPACE (Jab)</span>
+            <span>C (Cross)</span>
+            <span>Z (Hook)</span>
+            <span>X (Uppercut)</span>
           </div>
         </div>
       </div>

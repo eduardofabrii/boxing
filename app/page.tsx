@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import GameComponent from "@/components/GameComponent"
+import GameComponentNew from "@/components/GameComponentNew"
 import Menu from "@/components/Menu"
 import About from "@/components/About"
 import Instructions from "@/components/Instructions"
@@ -54,7 +54,7 @@ export default function Home() {
 
         {gameState === "instructions" && <Instructions onBack={() => setGameState("menu")} />}
 
-        {gameState === "game" && <GameComponent onGameOver={handleGameOver} round={round} initialScore={score} />}
+        {gameState === "game" && <GameComponentNew onGameOver={handleGameOver} round={round} initialScore={score} />}
 
         {gameState === "gameOver" && (
           <GameOver

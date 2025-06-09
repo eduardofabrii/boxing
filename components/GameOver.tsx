@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Trophy, Skull, Rocket, RotateCcw, Home } from "lucide-react"
+import { Trophy, Skull, Rocket, RotateCcw, Home, HandHeart } from "lucide-react"
+import Image from "next/image"
 
 interface GameOverProps {
   winner: string
@@ -14,30 +15,80 @@ interface GameOverProps {
 
 export default function GameOver({ winner, score, round, onRestart, onContinue, onMainMenu }: GameOverProps) {
   const isVictory = winner === "player"
+  const isDraw = winner === "draw"
   
-  return (
+  const getIcon = () => {
+    if (isVictory) return <Trophy className="w-7 h-7 text-white" />
+    if (isDraw) return <HandHeart className="w-7 h-7 text-white" />
+    return <Skull className="w-7 h-7 text-white" />
+  }
+
+  const getTitle = () => {
+    if (isVictory) return "VICTORY!"
+    if (isDraw) return "DRAW!"
+    return "DEFEAT!"
+  }
+
+  const getColorClasses = () => {
+    if (isVictory) return {
+      iconBg: 'bg-gradient-to-r from-green-500 to-emerald-500',
+      titleGradient: 'from-green-500 via-emerald-500 to-green-500',
+      textColor: 'text-green-400'
+    }
+    if (isDraw) return {
+      iconBg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+      titleGradient: 'from-yellow-500 via-orange-500 to-yellow-500',
+      textColor: 'text-yellow-400'
+    }
+    return {
+      iconBg: 'bg-gradient-to-r from-red-500 to-rose-500',
+      titleGradient: 'from-red-500 via-rose-500 to-red-500',
+      textColor: 'text-red-400'
+    }
+  }
+  const getMessage = () => {
+    if (isVictory) return "Congratulations! You are the Boxing Champion!"
+    if (isDraw) return "Great fight! It's a tie!"
+    return "You were knocked out! Train harder!"
+  }
+
+  const colors = getColorClasses()
+    return (
     <div className="relative flex flex-col items-center gap-8 p-12 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
-      <div className="text-center space-y-4">        
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-            isVictory 
-              ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-              : 'bg-gradient-to-r from-red-500 to-rose-500'
-          }`}>
-            {isVictory ? (
-              <Trophy className="w-7 h-7 text-white" />
-            ) : (
-              <Skull className="w-7 h-7 text-white" />
-            )}
+      
+      {/* Cinturão de campeão - só aparece quando o jogador vence */}
+      {isVictory && (
+        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="relative">
+            <Image
+              src="/cinturao.jpeg"
+              alt="Championship Belt"
+              width={120}
+              height={80}
+              className="object-contain drop-shadow-2xl"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-yellow-400/20 to-transparent rounded-lg animate-pulse"></div>
           </div>
-          <h1 className={`text-4xl font-black bg-gradient-to-r ${
-            isVictory 
-              ? 'from-green-500 via-emerald-500 to-green-500' 
-              : 'from-red-500 via-rose-500 to-red-500'
-          } bg-clip-text text-transparent`}>
-            {isVictory ? "VICTORY!" : "DEFEAT!"}
+        </div>
+      )}
+
+      <div className="text-center space-y-4 mt-8">        
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors.iconBg}`}>
+            {getIcon()}
+          </div>
+          <h1 className={`text-4xl font-black bg-gradient-to-r ${colors.titleGradient} bg-clip-text text-transparent`}>
+            {getTitle()}
           </h1>
         </div>
+        
+        {/* Mensagem especial para vitória */}
+        {isVictory && (
+          <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 rounded-lg p-4 mb-4">
+            <h2 className="text-xl font-bold text-yellow-400 mb-2">🏆 CHAMPION! 🏆</h2>
+            <p className="text-yellow-200 text-sm">You are the Boxing Champion!</p>
+          </div>
+        )}
         
         {/* Stats */}
         <div className="space-y-3 p-4 bg-gray-800/50 rounded-xl border border-gray-600/30">
@@ -50,10 +101,8 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
             <span className="text-yellow-400 font-bold text-xl">{score}</span>
           </div>
         </div>
-          <p className={`text-lg font-medium ${
-          isVictory ? 'text-green-400' : 'text-red-400'
-        }`}>
-          {isVictory ? "Congratulations! You won the match!" : "Better luck next time!"}
+          <p className={`text-lg font-medium ${colors.textColor}`}>
+          {getMessage()}
         </p>
       </div>
 
@@ -90,11 +139,9 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
             Main Menu
           </span>
         </Button>
-      </div>
-
-      {/* Footer */}
+      </div>      {/* Footer */}
       <div className="text-center text-gray-500 text-sm mt-2">
-        <p>{isVictory ? "Champion mindset!" : "Train harder, fight stronger!"}</p>
+        <p>{isVictory ? "You are the champion!" : isDraw ? "Well matched fighters!" : "Get back in the ring!"}</p>
       </div>
     </div>
   )
