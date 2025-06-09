@@ -107,6 +107,7 @@ class Player {
       }
     }
 
+    // Atualiza animações de soco
     if (this.isPunching) {
       this.punchFrame++
       this.animatePunch()
@@ -707,30 +708,15 @@ class Player {
   isPunchActive() {
     return this.isPunching && this.punchFrame >= 5 && this.punchFrame <= 10
   }
+
   getPunchDamage() {
-    // Dano mais realista baseado no tipo de golpe
-    let baseDamage;
     switch (this.punchType) {
-      case "jab": 
-        baseDamage = this.p5.random(5, 12); // Golpe rápido, menor dano
-        break;
-      case "cross": 
-        baseDamage = this.p5.random(15, 25); // Golpe de poder médio
-        break;
-      case "hook": 
-        baseDamage = this.p5.random(12, 20); // Golpe lateral médio
-        break;
-      case "uppercut": 
-        baseDamage = this.p5.random(18, 30); // Golpe mais poderoso
-        break;
-      default: 
-        baseDamage = this.p5.random(5, 12);
+      case "jab": return this.p5.random(8, 15)
+      case "uppercut": return this.p5.random(20, 35)
+      case "hook": return this.p5.random(15, 25)
+      case "cross": return this.p5.random(25, 40)
+      default: return this.p5.random(8, 15)
     }
-    
-    // Fator de precisão baseado no frame do golpe
-    const precisionFactor = this.punchFrame >= 5 && this.punchFrame <= 8 ? 1.2 : 0.8;
-    
-    return Math.round(baseDamage * precisionFactor);
   }
 }
 
@@ -942,7 +928,8 @@ export default function GameComponent({
     enemy: Enemy,
     particles: ParticleSystem,
     hud: HUD
-  ) => {    // Verifica soco do jogador no inimigo
+  ) => {
+    // Verifica soco do jogador no inimigo
     if (player.isPunchActive()) {
       const punchPos = player.getPunchPosition()
       const distance = player.p5.dist(
@@ -950,17 +937,7 @@ export default function GameComponent({
         enemy.position.x, enemy.position.y
       )
 
-      // Distância mais realista baseada no tipo de golpe
-      let hitRange;
-      switch (player.punchType) {
-        case "jab": hitRange = 45; break;     // Alcance maior, golpe direto
-        case "cross": hitRange = 50; break;  // Alcance máximo, golpe de poder
-        case "hook": hitRange = 35; break;   // Alcance menor, golpe lateral
-        case "uppercut": hitRange = 30; break; // Alcance mínimo, golpe por baixo
-        default: hitRange = 40;
-      }
-
-      if (distance < hitRange) {
+      if (distance < 40) {
         const damage = player.getPunchDamage()
         enemy.takeDamage(damage, player.punchType)
         
@@ -978,7 +955,9 @@ export default function GameComponent({
 
         player.isPunching = false // Evita múltiplos hits
       }
-    }    // Verifica soco do inimigo no jogador
+    }
+
+    // Verifica soco do inimigo no jogador
     if (enemy.isPunchActive()) {
       const punchPos = enemy.getPunchPosition()
       const distance = enemy.p5.dist(
@@ -986,17 +965,7 @@ export default function GameComponent({
         player.position.x, player.position.y
       )
 
-      // Distância mais realista baseada no tipo de golpe do inimigo
-      let hitRange;
-      switch (enemy.punchType) {
-        case "jab": hitRange = 45; break;
-        case "cross": hitRange = 50; break;
-        case "hook": hitRange = 35; break;
-        case "uppercut": hitRange = 30; break;
-        default: hitRange = 40;
-      }
-
-      if (distance < hitRange) {
+      if (distance < 40) {
         const damage = enemy.getPunchDamage()
         player.takeDamage(damage, enemy.punchType)
         
@@ -1067,46 +1036,26 @@ export default function GameComponent({
       // audioManager.stopCrowd() - áudio removido
     }
   }, [])
+
   return (
-    <div className="flex flex-col h-screen bg-black">
-      {/* Status Bar Superior */}
-      <div className="flex justify-between items-center px-6 py-2 bg-gray-900 border-b border-gray-700">
-        <div className="text-white">
-          <span className="text-lg font-bold">Round {round}</span>
-          <span className="ml-4 text-yellow-400 font-semibold">Score: {score}</span>
-        </div>
-        <div className="text-white text-center">
-          <span className="text-sm text-gray-300">BOXING CHAMPIONSHIP</span>
-        </div>
-        <div className="text-white text-right">
-          <span className="text-sm text-gray-300">ESC para pausar</span>
-        </div>
+    <div className="relative">      <Sketch
+        setup={setup}
+        draw={draw}
+        keyPressed={keyPressed}
+      />
+      
+      {/* Controles na tela */}
+      <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 p-4 rounded">
+        <h3 className="text-lg font-bold mb-2">Controles:</h3>
+        <p>WASD/Setas: Mover</p>
+        <p>Q: Jab | W: Cross</p>
+        <p>E: Hook | R: Uppercut</p>
       </div>
 
-      {/* Área de Jogo */}
-      <div className="flex-1 relative overflow-hidden">
-        <Sketch
-          setup={setup}
-          draw={draw}
-          keyPressed={keyPressed}
-        />
-      </div>
-
-      {/* Controles na parte inferior */}
-      <div className="bg-gray-900 border-t border-gray-700 px-6 py-3">
-        <div className="flex justify-center items-center space-x-8 text-white text-sm">
-          <div className="flex items-center space-x-4">
-            <span className="font-semibold text-gray-300">Movimento:</span>
-            <span>WASD ou Setas</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="font-semibold text-gray-300">Golpes:</span>
-            <span>Q (Jab)</span>
-            <span>W (Cross)</span>
-            <span>E (Hook)</span>
-            <span>R (Uppercut)</span>
-          </div>
-        </div>
+      {/* HUD adicional */}
+      <div className="absolute top-4 right-4 text-white bg-black bg-opacity-50 p-4 rounded">
+        <p>Round: {round}</p>
+        <p>Score: {score}</p>
       </div>
     </div>
   )
