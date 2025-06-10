@@ -6,7 +6,7 @@ export class HUD {
   private comboTimer = 0;
   private scorePopups: ScorePopup[] = [];
   private healthBarAnimations = { player: 0, enemy: 0 };
-  private roundTimer = 20; // 20 segundos por round
+  private roundTimer = 20; 
   private frameCounter = 0;
   private isPaused = false;
 

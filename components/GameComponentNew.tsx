@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { ParticleSystem } from "./ParticleSystem"
 import { BackgroundRenderer } from "./BackgroundRenderer"
 import { HUD } from "./HUD"
+import { Play, Square, Pause } from "lucide-react"
 
 const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
   ssr: false,
@@ -563,41 +564,33 @@ class Player {  public position: any
     p5.fill(150)
     p5.noStroke()
     p5.ellipse(-12, 76, 4, 2)
-    p5.ellipse(12, 76, 4, 2)
-
-    // Shorts de boxe mais realistas e estilosos
+    p5.ellipse(12, 76, 4, 2)    // Shorts de boxe mais estreitos e estilosos
     p5.fill(this.trunkColor)
     p5.stroke(p5.lerpColor(this.trunkColor, p5.color(0), 0.4))
     p5.strokeWeight(2.5)
-    p5.rect(-25, -2, 50, 42, 10)
-    
-    // Faixa superior decorativa
+    p5.rect(-20, -2, 40, 38, 8)
+      // Faixa superior decorativa
     p5.fill(p5.lerpColor(this.trunkColor, p5.color(255), 0.4))
     p5.noStroke()
-    p5.rect(-23, 0, 46, 4, 4)
+    p5.rect(-18, 0, 36, 4, 4)
     
     // Logo/faixa lateral
-    p5.rect(-4, 8, 8, 28, 3)
+    p5.rect(-3, 8, 6, 24, 3)
     
     // Detalhes de costura
     p5.stroke(p5.lerpColor(this.trunkColor, p5.color(0), 0.6))
     p5.strokeWeight(0.5)
-    p5.line(-23, 6, 23, 6)
-    p5.line(-23, 34, 23, 34)
+    p5.line(-18, 6, 18, 6)
+    p5.line(-18, 30, 18, 30)
 
-    // Torso mais anatômico e musculoso
     p5.fill(this.skinColor)
     p5.stroke(0)
     p5.strokeWeight(2)
     
-    // Corpo principal com breathing
     p5.push()
     p5.translate(0, breathingAdjust)
+    p5.ellipse(0, -8, this.size * 0.7, this.size * 0.8)
     
-    // Torso principal mais largo e musculoso
-    p5.ellipse(0, -8, this.size + 12, this.size * 0.95)
-    
-    // Sistema abdominal detalhado
     p5.noStroke()
     p5.fill(p5.lerpColor(this.skinColor, p5.color(0), 0.2))
     
@@ -605,56 +598,45 @@ class Player {  public position: any
     p5.ellipse(-10, -8, 14, 10)
     p5.ellipse(10, -8, 14, 10)
     
-    // Six-pack médio
     p5.ellipse(-8, 2, 12, 10)
     p5.ellipse(8, 2, 12, 10)
     
-    // Six-pack inferior
     p5.ellipse(-6, 12, 10, 8)
     p5.ellipse(6, 12, 10, 8)
     
-    // Linha alba (linha central definida)
     p5.stroke(p5.lerpColor(this.skinColor, p5.color(0), 0.3))
     p5.strokeWeight(1.5)
     p5.line(0, -25, 0, 25)
     
-    // Linha horizontal separando abs
     p5.strokeWeight(1)
     p5.line(-12, -3, 12, -3)
     p5.line(-10, 7, 10, 7)
 
-    // Músculos peitorais mais definidos e realistas
     p5.noStroke()
     p5.fill(p5.lerpColor(this.skinColor, p5.color(0), 0.25))
     p5.ellipse(-18, -20, 32, 26)
     p5.ellipse(18, -20, 32, 26)
     
-    // Highlight dos peitorais
     p5.fill(p5.lerpColor(this.skinColor, p5.color(255), 0.3))
     p5.ellipse(-18, -25, 22, 12)
     p5.ellipse(18, -25, 22, 12)
     
-    // Separação entre peitorais
     p5.stroke(p5.lerpColor(this.skinColor, p5.color(0), 0.2))
     p5.strokeWeight(1)
     p5.line(0, -32, 0, -15)
 
-    // Músculos do ombro (deltoides) mais pronunciados
     p5.fill(p5.lerpColor(this.skinColor, p5.color(0), 0.3))
     p5.noStroke()
     p5.ellipse(-28, -28, 24, 30)
     p5.ellipse(28, -28, 24, 30)
     
-    // Highlight dos deltoides
     p5.fill(p5.lerpColor(this.skinColor, p5.color(255), 0.2))
     p5.ellipse(-30, -32, 16, 18)
     p5.ellipse(30, -32, 16, 18)
     
-    // Trapézio (músculos do pescoço) mais definido
     p5.fill(p5.lerpColor(this.skinColor, p5.color(0), 0.2))
     p5.triangle(-15, -38, 15, -38, 0, -28)
     
-    // Serrátil anterior (músculos laterais)
     p5.fill(p5.lerpColor(this.skinColor, p5.color(0), 0.15))
     for (let i = 0; i < 3; i++) {
       p5.ellipse(-32, -15 + i * 8, 8, 4)
@@ -663,9 +645,7 @@ class Player {  public position: any
     
     p5.pop()
 
-    // Efeitos de suor e batalha
     if (this.health < this.maxHealth * 0.8) {
-      // Brilho do suor
       p5.fill(255, 255, 255, 60)
       p5.noStroke()
       p5.ellipse(-15, -18, 8, 4)
@@ -673,68 +653,58 @@ class Player {  public position: any
       p5.ellipse(0, -5, 6, 3)
     }
 
-    // Cicatrizes e marcas de lutador experiente
     if (this.health < this.maxHealth * 0.7) {
       p5.stroke(p5.lerpColor(this.skinColor, p5.color(255, 100, 100), 0.4))
       p5.strokeWeight(1.5)
-      p5.line(-12, -10, -8, -14) // Cicatriz no peito
+      p5.line(-12, -10, -8, -14) 
       
       if (this.health < this.maxHealth * 0.4) {
-        p5.line(10, 0, 14, -4) // Cicatriz no abdômen
-        p5.line(-8, 8, -4, 4)  // Cicatriz adicional
+        p5.line(10, 0, 14, -4) 
+        p5.line(-8, 8, -4, 4)  
       }
     }
     
-    // Veias visíveis quando muito cansado ou bombeado
     if (this.isPunching || this.health < this.maxHealth * 0.3) {
       p5.stroke(p5.lerpColor(this.skinColor, p5.color(0, 100, 200), 0.3))
       p5.strokeWeight(0.8)
-      p5.line(-20, -15, -15, -8) // Veia no bíceps
-      p5.line(15, -8, 20, -15)   // Veia no bíceps direito
-      p5.line(-5, 5, 5, 8)       // Veia abdominal
+      p5.line(-20, -15, -15, -8) 
+      p5.line(15, -8, 20, -15)   
+      p5.line(-5, 5, 5, 8)       
     }
   }drawHead() {
     const p5 = this.p5
     const headSize = this.size * 0.8
     
-    // Usa a imagem da cabeça se estiver carregada
     if (this.headImg && this.headImg.width > 0) {
       p5.push()
-      p5.translate(0, -50) // Posiciona a cabeça
+      p5.translate(0, -50) 
       
-      // Efeitos visuais baseados no estado
       if (this.isHit || this.stunned) {
-        // Efeito de tremor quando atingido
         p5.translate(p5.random(-2, 2), p5.random(-2, 2))
       }
       
-      // Aplica escala e rotação se necessário
       if (!this.facingRight) {
-        p5.scale(-1, 1) // Espelha horizontalmente se estiver virado para a esquerda
+        p5.scale(-1, 1) 
       }
       
-      // Efeitos de cor baseado na vida
       if (this.health < this.maxHealth * 0.5) {
-        p5.tint(255, 200, 200) // Tom avermelhado quando machucado
+        p5.tint(255, 200, 200)
       } else if (this.health < this.maxHealth * 0.8) {
-        p5.tint(255, 220, 220) // Tom levemente avermelhado
+        p5.tint(255, 220, 220) 
       } else {
-        p5.tint(255) // Normal
+        p5.tint(255) 
       }
       
       p5.imageMode(p5.CENTER)
       p5.image(this.headImg, 0, 0, headSize + 10, headSize + 10)
       
-      // Remove o tint
       p5.noTint()
       
       p5.pop()
       
-      // Efeitos adicionais sobre a imagem
       this.addHeadEffects()
       
     } else {
-      // Fallback: desenho procedural da cabeça caso a imagem não carregue
       this.drawProceduralHead()
     }
   }
@@ -742,7 +712,6 @@ class Player {  public position: any
   addHeadEffects() {
     const p5 = this.p5
     
-    // Efeitos de suor
     if (this.health < this.maxHealth * 0.8) {
       p5.fill(255, 255, 255, 60)
       p5.noStroke()
@@ -751,7 +720,6 @@ class Player {  public position: any
       p5.ellipse(0, -72, 3, 1)
     }
     
-    // Estrelas quando atordoado
     if (this.stunned) {
       for (let i = 0; i < 3; i++) {
         const angle = (p5.TWO_PI * i) / 3 + p5.frameCount * 0.05
@@ -764,7 +732,6 @@ class Player {  public position: any
         p5.translate(x, y)
         p5.rotate(p5.frameCount * 0.1)
         
-        // Desenha estrela pequena
         p5.beginShape()
         for (let j = 0; j < 10; j++) {
           const radius = j % 2 === 0 ? 4 : 2
@@ -778,9 +745,8 @@ class Player {  public position: any
       }
     }
     
-    // Marcas de luta e hematomas progressivos sobre a imagem
     if (this.health < this.maxHealth * 0.8) {
-      p5.fill(p5.color(100, 0, 100, 120)) // Hematoma roxo
+      p5.fill(p5.color(100, 0, 100, 120)) 
       p5.noStroke()
       p5.ellipse(8, -68, 6, 4)
       
@@ -788,14 +754,13 @@ class Player {  public position: any
         p5.ellipse(-6, -66, 4, 3)
         
         if (this.health < this.maxHealth * 0.3) {
-          p5.ellipse(-4, -59, 3, 2) // Corte no rosto
+          p5.ellipse(-4, -59, 3, 2) 
           p5.fill(p5.color(255, 0, 0, 150))
           p5.ellipse(-4, -59, 1, 0.5)
         }
       }
     }
     
-    // Efeito de respiração pesada quando cansado
     if (this.health < this.maxHealth * 0.3) {
       if (p5.frameCount % 40 < 20) {
         p5.fill(255, 255, 255, 60)
@@ -1501,11 +1466,9 @@ class Player {  public position: any
     const gloveY = this.position.y - 10 + 30 + armY + Math.sin(armAngle) * extension
 
     return this.p5.createVector(gloveX, gloveY)
-  }
-  isPunchActive() {
+  }  isPunchActive() {
     if (!this.isPunching) return false
     
-    // Janela de acerto baseada no tipo de soco
     let activeStart = 5
     let activeEnd = 10
     
@@ -1528,8 +1491,11 @@ class Player {  public position: any
         break
     }
     
-    return this.punchFrame >= activeStart && this.punchFrame <= activeEnd
-  }  getPunchDamage() {
+    const isActive = this.punchFrame >= activeStart && this.punchFrame <= activeEnd
+  
+    
+    return isActive
+  }getPunchDamage() {
     let baseDamage
     
     switch (this.punchType) {
@@ -1572,22 +1538,23 @@ class Enemy extends Player {
   public difficulty: number
   public attackRange: number
   public aggressiveness: number
+  
   constructor(p5: any, x: number, y: number, type: string, round: number) {
     super(p5, x, y, type)
     this.attackTimer = 0
     this.moveTimer = 0
     this.targetPosition = p5.createVector(x, y)
     this.difficulty = round
-    this.moveSpeed = 3 + round * 0.5
-    this.health = 500 + (round - 1) * 50
+    this.moveSpeed = 2.0 + round * 0.15 // Ainda mais lento: 2.0 + 0.15 (era 2.5 + 0.3)
+    this.health = 500 + (round - 1) * 25 // Menos vida: 25 por round (era 40)
     this.maxHealth = this.health
     this.facingRight = false
-    this.attackRange = 80 + round * 5 // Aumenta alcance com dificuldade
-    this.aggressiveness = 0.7 + round * 0.1
+    this.attackRange = 60 + round * 2 // Menor alcance: 60 + 2 (era 70 + 3)
+    this.aggressiveness = 0.3 + round * 0.05 // Muito menos agressivo: 0.3 + 0.05 (era 0.5 + 0.08)
     
     // Ajustes específicos para o oponente
-    this.maxPunchFrames = 18 // Socos ligeiramente mais rápidos
-  }  updateAI(playerPosition: any) {
+    this.maxPunchFrames = 20 // Socos mais lentos: 20 frames (era 18)
+  }updateAI(playerPosition: any) {
     if (this.isKnockedOut) return
 
     const distToPlayer = this.p5.dist(
@@ -1600,42 +1567,39 @@ class Enemy extends Player {
     this.moveTimer--
 
     // Atualizar direção que está enfrentando
-    this.facingRight = playerPosition.x > this.position.x
-
-    // IA de combate melhorada - MUITO MAIS AGRESSIVA
+    this.facingRight = playerPosition.x > this.position.x    // IA de combate melhorada - MUITO MAIS AGRESSIVA
     if (distToPlayer < this.attackRange && this.attackTimer <= 0 && !this.isPunching && !this.stunned) {
       const punchType = this.choosePunchType()
       const punchSuccess = this.punch(punchType)
-      
-      if (punchSuccess) {
-        // Timer muito mais baixo para ataques mais frequentes
-        this.attackTimer = Math.max(5, 15 - this.difficulty * 2)
+        // Removed debug logs for cleaner gameplay
+        if (punchSuccess) {        // Timer ainda mais alto para ataques muito menos frequentes (mais fácil)
+        this.attackTimer = Math.max(25, 40 - this.difficulty * 2) // Ainda mais aumentado: 25,40 com redução menor
         
-        // Chance muito alta de combo em dificuldades mais altas
-        if (this.difficulty >= 2 && this.p5.random() < 0.8) {
-          this.attackTimer = Math.max(3, this.attackTimer - 8)
+
+          // Chance ainda mais reduzida de combo em dificuldades altas
+        if (this.difficulty >= 3 && this.p5.random() < 0.2) { // Reduzido ainda mais: de 0.5 para 0.2
+          this.attackTimer = Math.max(15, this.attackTimer - 2) // Redução menor: de 4 para 2
+
         }
         
-        // Em dificuldade máxima, quase sempre faz combo
-        if (this.difficulty >= 3 && this.p5.random() < 0.9) {
-          this.attackTimer = Math.max(2, this.attackTimer - 10)
+        // Em dificuldade máxima, chance muito menor de combo
+        if (this.difficulty >= 4 && this.p5.random() < 0.1) { // Reduzido ainda mais: de 0.3 para 0.1
+          this.attackTimer = Math.max(10, this.attackTimer - 3) // Redução menor: de 5 para 3
+
         }
       }
-    } else if (this.moveTimer <= 0 && !this.isPunching) {
+    }else if (this.moveTimer <= 0 && !this.isPunching) {
       this.chooseMovement(playerPosition)
-      this.moveTimer = this.p5.floor(this.p5.random(15, 25)) // Movimento mais frequente
-    }
-
-    // Movimento melhorado - mais agressivo
+      this.moveTimer = this.p5.floor(this.p5.random(20, 35)) // Movimento menos frequente: 20-35 (era 10-20)
+    }// Movimento melhorado - mais agressivo
     if (!this.isPunching && !this.stunned) {
       const direction = this.p5.createVector(
         this.targetPosition.x - this.position.x,
         this.targetPosition.y - this.position.y
       )
-      
-      if (direction.mag() > 4) { // Reduzido para mais responsividade
+        if (direction.mag() > 3) { // Reduzido para mais responsividade
         direction.normalize()
-        direction.mult(this.moveSpeed * (this.isHit ? 0.8 : 1.4)) // Movimento muito mais rápido
+        direction.mult(this.moveSpeed * (this.isHit ? 0.5 : 0.8)) // Ainda mais lento: 0.8 (era 1.2)
         this.position.add(direction)
         
         // Manter dentro dos limites da arena
@@ -1648,39 +1612,35 @@ class Enemy extends Player {
     const distToPlayer = this.p5.dist(
       this.position.x, this.position.y,
       this.targetPosition.x, this.targetPosition.y
-    )
-    
-    // Escolha de soco baseada na distância e dificuldade - MAIS AGRESSIVO
-    if (distToPlayer < 30) {
-      // Muito próximo - uppercuts e hooks poderosos
+    )    // Escolha de soco baseada na distância e dificuldade - MAIS EQUILIBRADO
+    if (distToPlayer < 30) {      // Muito próximo - ainda mais jabs e muito menos ataques poderosos
       if (this.difficulty >= 3) {
-        if (rand < 0.5) return "uppercut"
+        if (rand < 0.6) return "jab" // Ainda mais jabs: 60% (era 40%)
         else if (rand < 0.8) return "hook"
+        else if (rand < 0.95) return "uppercut" // Muito menos uppercuts
         else return "cross"
       } else {
-        if (rand < 0.7) return "uppercut"
-        else return "hook"
-      }
-    } else if (distToPlayer < 50) {
-      // Distância média - todos os tipos com preferência por golpes poderosos
-      if (this.difficulty >= 3) {
-        if (rand < 0.35) return "cross"
-        else if (rand < 0.6) return "hook"
-        else if (rand < 0.8) return "uppercut"
-        else return "jab"
-      } else if (this.difficulty >= 2) {
-        if (rand < 0.4) return "cross"
-        else if (rand < 0.7) return "hook"
-        else if (rand < 0.9) return "jab"
+        if (rand < 0.8) return "jab" // Muito mais jabs: 80% (era 60%)
+        else if (rand < 0.95) return "hook"
         else return "uppercut"
+      }
+    } else if (distToPlayer < 50) {      // Distância média - mais jabs, menos poder
+      if (this.difficulty >= 3) {
+        if (rand < 0.7) return "jab" // Muito mais jabs: 70% (era 50%)
+        else if (rand < 0.85) return "cross"
+        else if (rand < 0.95) return "hook"
+        else return "uppercut"
+      } else if (this.difficulty >= 2) {
+        if (rand < 0.8) return "jab" // Ainda mais jabs: 80% (era 60%)
+        else if (rand < 0.95) return "cross"
+        else return "hook"
       } else {
-        if (rand < 0.5) return "jab"
-        else if (rand < 0.8) return "cross"
+        if (rand < 0.9) return "jab" // Quase só jabs: 90% (era 75%)
+        else if (rand < 0.98) return "cross"
         else return "hook"
       }
-    } else {
-      // Distância longa - jabs e crosses rápidos
-      if (rand < 0.7) return "jab"
+    } else {      // Distância longa - quase exclusivamente jabs
+      if (rand < 0.95) return "jab" // Quase só jabs: 95% (era 85%)
       else return "cross"
     }
   }chooseMovement(playerPosition: any) {
@@ -1735,11 +1695,9 @@ class Enemy extends Player {
         this.p5.constrain(playerPosition.y - this.p5.sin(finalAngle) * optimalDistance, 200, 450)
       )
     }
-  }
-
-  getPunchDamage() {
+  }  getPunchDamage() {
     const baseDamage = super.getPunchDamage()
-    const difficultyMultiplier = 1.0 + (this.difficulty * 0.15)
+    const difficultyMultiplier = 0.6 + (this.difficulty * 0.05) // Ainda mais reduzido: 0.6 + 0.05 (era 0.8 + 0.1)
     return Math.round(baseDamage * difficultyMultiplier)
   }
 }
@@ -1748,13 +1706,13 @@ export default function GameComponentNew({
   onGameOver,
   round,
   initialScore,
-}: GameComponentProps) {
-  const [score, setScore] = useState(initialScore)
+}: GameComponentProps) {  const [score, setScore] = useState(initialScore)
   const [gameEnded, setGameEnded] = useState(false)
   const [currentRound, setCurrentRound] = useState(1)
   const [roundTimer, setRoundTimer] = useState(20) 
   const [isRoundActive, setIsRoundActive] = useState(true)
-  const [roundResults, setRoundResults] = useState<string[]>([]) 
+  const [roundResults, setRoundResults] = useState<string[]>([])
+  const [isPaused, setIsPaused] = useState(false)
   
   // Refs para sistemas do jogo
   const playerRef = useRef<Player | null>(null)
@@ -1780,9 +1738,8 @@ export default function GameComponentNew({
     // audioManager.playGameMusic()
     // audioManager.playCrowd()
   }
-
   const handlePlayerMovement = (p5: any, player: Player) => {
-    if (gameEnded) return
+    if (gameEnded || isPaused) return
 
     player.velocity.set(0, 0)
 
@@ -1847,18 +1804,35 @@ export default function GameComponentNew({
       onGameOver(result, score)
     }, 2000)
   }
-  
-  const draw = (p5: any) => {
+    const draw = (p5: any) => {
     if (gameEnded) return
 
     const player = playerRef.current!
     const enemy = enemyRef.current!
     const particles = particleSystemRef.current!
     const background = backgroundRef.current!
-    const hud = hudRef.current!
-
-    // Sistema de rounds - verificar se o round acabou
-    if (hud.getTimeRemaining() <= 0 && isRoundActive) {
+    const hud = hudRef.current!    // Se o jogo estiver pausado, desenhar apenas o fundo estático
+    if (isPaused) {
+      // Desenhar o jogo pausado no fundo
+      background.draw()
+      player.draw()
+      enemy.draw()
+      particles.draw()
+      hud.draw(
+        player.health,
+        enemy.health,
+        score,
+        currentRound,
+        player.isPunching ? player.punchType : ""
+      )
+      
+      p5.push()
+      p5.fill(0, 0, 0, 150)
+      p5.rect(0, 0, p5.width, p5.height)
+      p5.pop()
+      return
+    }// Sistema de rounds - verificar se o round acabou (não quando pausado)
+    if (hud.getTimeRemaining() <= 0 && isRoundActive && !isPaused) {
       setIsRoundActive(false)
       
       // Determinar vencedor do round baseado na vida
@@ -1904,29 +1878,23 @@ export default function GameComponentNew({
       }
     }
 
-    // Verificar nocaute - se alguém zerar a vida, fim de jogo imediato
     if (player.health <= 0 || enemy.health <= 0) {
       endGame(player, enemy)
       return
-    }
-
-    // Só atualiza o jogo se o round estiver ativo
-    if (isRoundActive) {
-      // Controles de movimento do jogador
+    }    // Só atualiza o jogo se o round estiver ativo e não estiver pausado
+    if (isRoundActive && !isPaused) {
       handlePlayerMovement(p5, player)
 
-      // Atualiza sistemas
       player.update()
+      enemy.update() // CORRIGIDO: Adicionado update do enemy
       enemy.updateAI(player.position)
       particles.update()
       background.update()
       hud.update()
 
-      // Verificar colisões de soco
       checkPunchCollisions(player, enemy, particles, hud)
     }
 
-    // Desenhar tudo
     background.draw()
     player.draw()
     enemy.draw()
@@ -1935,11 +1903,10 @@ export default function GameComponentNew({
       player.health,
       enemy.health,
       score,
-      currentRound, // Usar currentRound em vez de round
+      currentRound, 
       player.isPunching ? player.punchType : ""
     )
 
-    // Mostrar informações entre rounds
     if (!isRoundActive && currentRound < 3) {
       p5.push()
       p5.fill(0, 0, 0, 150)
@@ -1960,7 +1927,7 @@ export default function GameComponentNew({
     enemy: Enemy,
     particles: ParticleSystem,
     hud: HUD
-  ) => {    // Verifica soco do jogador no inimigo
+  ) => {   
     if (player.isPunchActive()) {
       const punchPos = player.getPunchPosition()
       const distance = player.p5.dist(
@@ -1968,7 +1935,6 @@ export default function GameComponentNew({
         enemy.position.x, enemy.position.y
       )
 
-      // Detecção de alcance melhorada baseada no tipo de soco
       let hitRange = 40
       switch (player.punchType) {
         case "jab": hitRange = 42; break
@@ -1991,8 +1957,7 @@ export default function GameComponentNew({
         hud.addScorePopup(enemy.position.x, enemy.position.y, points, "hit")
         hud.addDamage(false)
         
-        // Integração com BackgroundRenderer
-        backgroundRef.current?.onPunchLanded(damage / 30) // Normaliza intensidade
+        backgroundRef.current?.onPunchLanded(damage / 30) 
         if (enemy.isKnockedOut) {
           backgroundRef.current?.onKnockdown()
         }
@@ -2000,28 +1965,27 @@ export default function GameComponentNew({
         backgroundRef.current?.addCameraShake(5, 10)
         backgroundRef.current?.setCrowdExcitement(0.8)
 
-        player.isPunching = false // Evita múltiplos hits
+        player.isPunching = false
       }
-    }// Verifica soco do inimigo no jogador
-    if (enemy.isPunchActive()) {
+    }    if (enemy.isPunchActive()) {
+      
       const punchPos = enemy.getPunchPosition()
       const distance = enemy.p5.dist(
         punchPos.x, punchPos.y,
         player.position.x, player.position.y
-      )
-
-      // Detecção de alcance melhorada baseada no tipo de soco
+      )      
       let hitRange = 40
       switch (enemy.punchType) {
-        case "jab": hitRange = 45; break
-        case "cross": hitRange = 50; break
-        case "hook": hitRange = 38; break
-        case "uppercut": hitRange = 35; break
-        default: hitRange = 40
+        case "jab": hitRange = 65; break // Reduzido ainda mais: de 75 para 65
+        case "cross": hitRange = 70; break // Reduzido ainda mais: de 80 para 70
+        case "hook": hitRange = 60; break // Reduzido ainda mais: de 70 para 60
+        case "uppercut": hitRange = 55; break // Reduzido ainda mais: de 65 para 55
+        default: hitRange = 60 // Reduzido ainda mais: de 70 para 60
       }
+      
 
-      if (distance < hitRange) {
-        const damage = enemy.getPunchDamage()
+
+      if (distance < hitRange) {        const damage = enemy.getPunchDamage()
         player.takeDamage(damage, enemy.punchType)
         
         particles.addHitEffect(player.position.x, player.position.y, damage)
@@ -2030,20 +1994,25 @@ export default function GameComponentNew({
         hud.addDamage(true)
         hud.resetCombo()
         
-        // Integração com BackgroundRenderer
-        backgroundRef.current?.onPunchLanded(damage / 30) 
+        backgroundRef.current?.onPunchLanded(damage / 30)
         if (player.isKnockedOut) {        backgroundRef.current?.onKnockdown()
         }
         
-        backgroundRef.current?.addCameraShake(3, 8);
-        enemy.isPunching = false // Evita múltiplos hits
+        backgroundRef.current?.addCameraShake(3, 8);        enemy.isPunching = false 
+      } else {
+        // Attack missed - no debug log needed
       }
     }
   }
-  
-  const keyPressed = (p5: any) => {
+    const keyPressed = (p5: any) => {
     const player = playerRef.current
-    if (!player || gameEnded) return
+    if (!player || gameEnded) return   
+    if (p5.keyCode === 27) { 
+      setIsPaused(!isPaused)
+      return
+    }
+
+    if (isPaused) return
 
     switch (p5.key.toLowerCase()) {
       case ' ': 
@@ -2064,6 +2033,13 @@ export default function GameComponentNew({
     return () => {
     }
   }, [])
+  const handleContinueGame = () => {
+    setIsPaused(false)
+  }
+
+  const handleQuitGame = () => {
+    onGameOver("quit", score)
+  }
 
   return (
     <div className="relative">
@@ -2072,11 +2048,68 @@ export default function GameComponentNew({
         draw={draw}
         keyPressed={keyPressed}
       />
+        {isPaused && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10">
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 overflow-hidden max-w-md w-full mx-4">
+            
+            {/* Header */}
+            <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-6">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                  <Pause className="w-5 h-5 text-yellow-500" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900">JOGO PAUSADO</h2>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 space-y-6">
+              <div className="text-center">
+                <p className="text-gray-300 text-lg">
+                  O que você gostaria de fazer?
+                </p>
+              </div>
+              
+              {/* Buttons */}
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={handleContinueGame}
+                  className="w-full h-14 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border border-green-500/50"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <Play className="w-5 h-5" />
+                    Continuar Jogo
+                  </span>
+                </button>
+                
+                <button
+                  onClick={handleQuitGame}
+                  className="w-full h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border border-red-500/50"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <Square className="w-5 h-5" />
+                    Sair do Jogo
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-gray-800/30 border-t border-gray-700/50">
+              <p className="text-center text-gray-500 text-sm">
+                Pressione <kbd className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs font-mono">ESC</kbd> para pausar/continuar
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 p-4 rounded">
         <h3 className="text-lg font-bold mb-2">Controles:</h3>
         <p>WASD/Setas: Mover</p>        <p>SPACE: Jab | C: Cross</p>
         <p>Z: Hook | X: Uppercut</p>
-      </div>      <div className="absolute top-4 right-4 text-white bg-black bg-opacity-50 p-4 rounded">
+        <p>ESC: Pausar</p>
+      </div><div className="absolute top-4 right-4 text-white bg-black bg-opacity-50 p-4 rounded">
         <p>Round: {currentRound}/3</p>
         <p>Score: {score}</p>
       </div>

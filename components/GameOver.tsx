@@ -55,23 +55,7 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
   const colors = getColorClasses()
     return (
     <div className="relative flex flex-col items-center gap-8 p-12 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
-      
-      {/* Cinturão de campeão - só aparece quando o jogador vence */}
-      {isVictory && (
-        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="relative">
-            <Image
-              src="/cinturao.jpeg"
-              alt="Championship Belt"
-              width={120}
-              height={80}
-              className="object-contain drop-shadow-2xl"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-yellow-400/20 to-transparent rounded-lg animate-pulse"></div>
-          </div>
-        </div>
-      )}
-
+    
       <div className="text-center space-y-4 mt-8">        
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors.iconBg}`}>
@@ -82,7 +66,6 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
           </h1>
         </div>
         
-        {/* Mensagem especial para vitória */}
         {isVictory && (
           <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 rounded-lg p-4 mb-4">
             <h2 className="text-xl font-bold text-yellow-400 mb-2">🏆 CHAMPION! 🏆</h2>

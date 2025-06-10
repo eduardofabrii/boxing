@@ -43,7 +43,6 @@ export class ParticleSystem {
       });
     }
 
-    // Adiciona onda de choque
     this.particles.push({
       position: p5.createVector(x, y),
       velocity: p5.createVector(0, 0),
