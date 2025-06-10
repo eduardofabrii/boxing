@@ -17,15 +17,13 @@ interface GameComponentProps {
   initialScore: number
 }
 
-type PunchType = "jab" | "cross" | "hook" | "uppercut";
-
 class Player {
   public position: any
   public velocity: any
   public health: number
   public maxHealth: number
   public isPunching: boolean
-  public punchType: PunchType | ""
+  public punchType: string
   public punchCooldown: number
   public punchFrame: number
   public maxPunchFrames: number
@@ -54,12 +52,13 @@ class Player {
   public leftGloveImg: any
   public rightGloveImg: any
   public headImg: any
-    constructor(p5: any, x: number, y: number, type: string) {
+  
+  constructor(p5: any, x: number, y: number, type: string) {
     this.p5 = p5
     this.position = p5.createVector(x, y)
     this.velocity = p5.createVector(0, 0)
-    this.health = 500
-    this.maxHealth = 500
+    this.health = 1000
+    this.maxHealth = 1000
     this.isPunching = false
     this.punchType = ""
     this.punchCooldown = 0
@@ -106,7 +105,6 @@ class Player {
   }
 
   initializeArms() {
-    // Posição de guarda alta mais realista desde o início
     this.leftArm = { x: -20, y: -8, angle: -0.4 }
     this.rightArm = { x: 20, y: -8, angle: 0.4 }
   }
@@ -775,7 +773,7 @@ class Player {
     p5.pop()
   }
 
-  punch(type: PunchType = "jab") {
+  punch(type = "jab") {
     if (this.punchCooldown <= 0 && !this.isKnockedOut && !this.stunned) {
       this.isPunching = true
       this.punchType = type
@@ -862,19 +860,19 @@ class Player {
     return isActive
   }
 
-  getPunchDamage(): number {
-    const baseDamage: Record<PunchType, number> = {
-      jab: 15,
-      cross: 25,
-      hook: 20,
-      uppercut: 30
+  getPunchDamage() {
+    const baseDamage: Record<"jab" | "cross" | "hook" | "uppercut", number> = {
+      "jab": 15,
+      "cross": 25,
+      "hook": 20,
+      "uppercut": 30
     }
 
-    return this.punchType && baseDamage[this.punchType as PunchType] ? baseDamage[this.punchType as PunchType] : 15
+    return baseDamage[this.punchType as "jab" | "cross" | "hook" | "uppercut"] || 15
   }
-  }
+}
 
-
+// Classe do inimigo (com IA facilitada)
 class Enemy extends Player {
   public attackTimer: number
   public moveTimer: number
@@ -882,30 +880,34 @@ class Enemy extends Player {
   public difficulty: number
   public attackRange: number
   public aggressiveness: number
-    constructor(p5: any, x: number, y: number, type: string, round: number) {
+  
+  constructor(p5: any, x: number, y: number, type: string, round: number) {
     super(p5, x, y, type)
     this.attackTimer = 0
     this.moveTimer = 0
     this.targetPosition = p5.createVector(x, y)
     this.difficulty = round
     this.moveSpeed = 2.0 + round * 0.15
-    this.health = 500
-    this.maxHealth = 500
+    this.health = 500 + (round - 1) * 25
+    this.maxHealth = this.health
     this.attackRange = 60 + round * 2
     this.aggressiveness = 0.3 + round * 0.05
     this.maxPunchFrames = 20
   }
-  update(player?: Player) {
+
+  update() {
     super.update()
-    if (!this.isKnockedOut && !this.stunned && player) {
-      this.updateAI(player)
+    if (!this.isKnockedOut && !this.stunned) {
+      this.updateAI()
     }
-  }updateAI(player: Player) {
+  }
+
+  updateAI() {
     this.attackTimer--
     this.moveTimer--
 
     if (this.attackTimer <= 0) {
-      this.attemptAttack(player)
+      this.attemptAttack()
     }
 
     if (this.moveTimer <= 0) {
@@ -916,7 +918,9 @@ class Enemy extends Player {
     this.moveTowardsTarget()
   }
 
-  attemptAttack(player: Player) {
+  attemptAttack() {
+    const player = arguments[0]
+    if (!player) return
 
     const distToPlayer = this.p5.dist(
       this.position.x, this.position.y,
@@ -1004,6 +1008,7 @@ export default function GameComponentNew({
   const particlesRef = useRef<ParticleSystem | null>(null)
   const backgroundRef = useRef<BackgroundRenderer | null>(null)
   const hudRef = useRef<HUD | null>(null)
+
   const setup = (p5: any, canvasParentRef: any) => {
     p5.createCanvas(800, 600).parent(canvasParentRef)
     
@@ -1013,66 +1018,53 @@ export default function GameComponentNew({
     backgroundRef.current = new BackgroundRenderer(p5)
     hudRef.current = new HUD(p5)
     
-    // Reset do timer a cada round
-    hudRef.current.resetTimer()
-    
     setIsPlaying(true)
   }
-    const draw = (p5: any) => {
+
+  const draw = (p5: any) => {
     if (!isPlaying || isPaused) return
 
     const player = playerRef.current
-    if (player && !gameEnded && !isPaused) {
-      // Movimento com WASD + Setas do teclado
-      if (p5.keyIsDown(65) || p5.keyIsDown(p5.LEFT_ARROW)) { // A ou ←
-        player.position.x -= player.moveSpeed
-        player.facingRight = false
-      }
-      if (p5.keyIsDown(68) || p5.keyIsDown(p5.RIGHT_ARROW)) { // D ou →
-        player.position.x += player.moveSpeed
-        player.facingRight = true
-      }
-      if (p5.keyIsDown(87) || p5.keyIsDown(p5.UP_ARROW)) { // W ou ↑
-        player.position.y -= player.moveSpeed
-      }
-      if (p5.keyIsDown(83) || p5.keyIsDown(p5.DOWN_ARROW)) { // S ou ↓
-        player.position.y += player.moveSpeed
-      }
-    }
-
     const enemy = enemyRef.current
     const particles = particlesRef.current
     const background = backgroundRef.current
     const hud = hudRef.current
 
-    if (!player || !enemy || !particles || !background || !hud) return    p5.background(220)
+    if (!player || !enemy || !particles || !background || !hud) return
+
+    p5.background(220)
+    
     background.update()
     background.draw()
 
     player.update()
-    enemy.update(player)
+    enemy.update()
     
-    // Atualizar sistemas
-    particles.update()
-    hud.update()
-    
-    // Sincronizar pausa do HUD
-    if (isPaused) {
-      hud.pauseTimer()
-    } else {
-      hud.resumeTimer()
+    // IA do inimigo
+    if (enemy && !enemy.isKnockedOut) {
+      enemy.attemptAttack()
     }
 
-    if (gameEnded) {      player.draw()
+    particles.update()
+
+    if (gameEnded) {
+      player.draw()
       enemy.draw()
       particles.draw()
-      hud.draw(player.health, enemy.health, score, round, "")
+      hud.draw(
+        player.health,
+        enemy.health,
+        score,
+        round,
+        player.isPunching ? player.punchType : ""
+      )
       return
     }
 
     player.draw()
     enemy.draw()
 
+    // Verificação de colisões do jogador
     if (player.isPunchActive()) {
       const punchPos = player.getPunchPosition()
       const distance = p5.dist(
@@ -1145,29 +1137,31 @@ export default function GameComponentNew({
         backgroundRef.current?.addCameraShake(3, 8);
         enemy.isPunching = false 
       } else {
+        // Attack missed - no debug log needed
       }
-    }    particles.draw()
-    hud.draw(player.health, enemy.health, score, round, player.isPunching ? player.punchType : "")
+    }
 
-    // Verificação de fim de jogo - CORRIGIDA
+    particles.draw()
+    hud.draw(
+      player.health,
+      enemy.health,
+      score,
+      round,
+      player.isPunching ? player.punchType : ""
+    )
+
+    // Verificação de fim de jogo
     if (player.health <= 0 && !gameEnded) {
       setGameEnded(true)
-      setTimeout(() => onGameOver("enemy", score), 2000) // Player perdeu = "enemy" venceu
+      setTimeout(() => onGameOver("defeat", score), 2000)
     } else if (enemy.health <= 0 && !gameEnded) {
       setGameEnded(true)
-      setTimeout(() => onGameOver("player", score), 2000) // Player venceu = "player"
-    } else if (hud.getTimeRemaining() <= 0 && !gameEnded) {
-      // Fim por tempo - quem tem mais vida vence
-      setGameEnded(true)
-      const result = player.health > enemy.health ? "player" : 
-                    enemy.health > player.health ? "enemy" : "draw"
-      setTimeout(() => onGameOver(result, score), 2000)
+      setTimeout(() => onGameOver("victory", score), 2000)
     }
   }
-  
   const keyPressed = (p5: any) => {
     const player = playerRef.current
-    if (!player || gameEnded) return
+    if (!player || gameEnded) return   
     if (p5.keyCode === 27) {
       setIsPaused(!isPaused)
       return
@@ -1175,7 +1169,7 @@ export default function GameComponentNew({
 
     if (isPaused) return
 
-    // Verifica se é SPACE (código 32)
+    // SPACE para Jab (keyCode 32)
     if (p5.keyCode === 32) {
       player.punch("jab")
       return
@@ -1193,73 +1187,40 @@ export default function GameComponentNew({
         break
     }
   }
-  const handleContinueGame = () => {
-    setIsPaused(false)
-  }
 
-  const handleQuitGame = () => {
-    setGameEnded(true)
-    onGameOver("quit", score)
+  const keyIsDown = (p5: any) => {
+    const player = playerRef.current
+    if (!player || gameEnded || isPaused) return
+
+    if (p5.keyIsDown(p5.LEFT_ARROW) || p5.keyIsDown(65)) {
+      player.position.x -= player.moveSpeed
+      player.facingRight = false
+    }
+    if (p5.keyIsDown(p5.RIGHT_ARROW) || p5.keyIsDown(68)) {
+      player.position.x += player.moveSpeed
+      player.facingRight = true
+    }
+    if (p5.keyIsDown(p5.UP_ARROW) || p5.keyIsDown(87)) {
+      player.position.y -= player.moveSpeed
+    }
+    if (p5.keyIsDown(p5.DOWN_ARROW) || p5.keyIsDown(83)) {
+      player.position.y += player.moveSpeed
+    }
   }
 
   return (
     <div className="relative w-full h-full">
-      <Sketch
-        setup={setup}
-        draw={draw}
-        keyPressed={keyPressed}
-      />      
+      <Sketch 
+        setup={setup} 
+        draw={draw} 
+        keyPressed={keyPressed} 
+      />
+      
       {isPaused && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10">
-          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 overflow-hidden max-w-md w-full mx-4">
-            
-            {/* Header */}
-            <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-6">
-              <div className="flex items-center justify-center gap-3">
-                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                  <Pause className="w-5 h-5 text-yellow-500" />
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900">JOGO PAUSADO</h2>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-8 space-y-6">
-              <div className="text-center">
-                <p className="text-gray-300 text-lg">
-                  O que você gostaria de fazer?
-                </p>
-              </div>
-              
-              {/* Buttons */}
-              <div className="flex flex-col gap-4">
-                <button
-                  onClick={handleContinueGame}
-                  className="w-full h-14 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border border-green-500/50"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Play className="w-5 h-5" />
-                    Continuar Jogo
-                  </span>
-                </button>
-                
-                <button
-                  onClick={handleQuitGame}
-                  className="w-full h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border border-red-500/50"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Square className="w-5 h-5" />
-                    Sair do Jogo
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 bg-gray-800/30 border-t border-gray-700/50">
-              <p className="text-center text-gray-500 text-sm">
-                Pressione <kbd className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs font-mono">ESC</kbd> para pausar/continuar
-              </p>
-            </div>
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg text-center">
+            <h2 className="text-2xl font-bold mb-4">Jogo Pausado</h2>
+            <p>Pressione ESC para continuar</p>
           </div>
         </div>
       )}

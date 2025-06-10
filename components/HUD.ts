@@ -6,14 +6,13 @@ export class HUD {
   private comboTimer = 0;
   private scorePopups: ScorePopup[] = [];
   private healthBarAnimations = { player: 0, enemy: 0 };
-  private roundTimer = 20; 
+  private roundTimer = 30; 
   private frameCounter = 0;
   private isPaused = false;
 
   constructor(p5Instance: p5) {
     this.p5 = p5Instance;
   }
-
   update() {
     if (this.comboTimer > 0) {
       this.comboTimer--;
@@ -33,7 +32,8 @@ export class HUD {
     }
 
     this.healthBarAnimations.player *= 0.9;
-    this.healthBarAnimations.enemy *= 0.9;    
+    this.healthBarAnimations.enemy *= 0.9;
+    
     if (!this.isPaused && this.roundTimer > 0) {
       this.frameCounter++;
       if (this.frameCounter >= 60) {
@@ -41,25 +41,25 @@ export class HUD {
         this.frameCounter = 0;
       }
     }
-  }
-  draw(playerHealth: number, enemyHealth: number, score: number, round: number, punchType: string) {
+  }  draw(playerHealth: number, enemyHealth: number, score: number, round: number, punchType: string) {
     this.drawHealthBars(playerHealth, enemyHealth);
     this.drawTimer();
     this.drawComboMeter();
     this.drawScorePopups();
+    this.drawPauseIndicator();
   }
   private drawHealthBars(playerHealth: number, enemyHealth: number) {
     const p5 = this.p5;
-    const barWidth = 250; // Reduzido
-    const barHeight = 20; // Reduzido
-    const margin = 20; // Reduzido
+    const barWidth = 250; 
+    const barHeight = 20; 
+    const margin = 20; 
 
     p5.push();
     p5.translate(margin, 15); 
 
     p5.fill(50, 50, 50);
     p5.stroke(255);
-    p5.strokeWeight(1); // Reduzido
+    p5.strokeWeight(1); 
     p5.rect(0, 0, barWidth, barHeight, 3);
 
     const playerHealthPercent = playerHealth / 500;
@@ -97,7 +97,7 @@ export class HUD {
     p5.pop();
 
     p5.push();
-    p5.translate(p5.width - margin - barWidth, 15); // Movido para mais alto
+    p5.translate(p5.width - margin - barWidth, 15); 
 
     p5.fill(50, 50, 50);
     p5.stroke(255);
@@ -285,7 +285,6 @@ export class HUD {
 
     p5.pop();
   }
-
   private drawMiniMap() {
     const p5 = this.p5;
 
@@ -314,10 +313,54 @@ export class HUD {
 
     p5.pop();
   }
+  private drawPauseIndicator() {
+    const p5 = this.p5;
+
+    p5.push();
+    p5.translate(p5.width / 2 - 70, 45);
+
+    p5.fill(30, 30, 30, 220); 
+    p5.stroke(200, 200, 200, 150);
+    p5.strokeWeight(1);
+    p5.rect(0, 0, 140, 32, 16); 
+
+    p5.fill(150, 150, 150);
+    p5.noStroke();
+    p5.rect(8, 10, 3, 12, 1);
+    p5.rect(13, 10, 3, 12, 1);
+
+    p5.fill(200, 200, 200);
+    p5.textAlign(p5.LEFT, p5.CENTER);
+    p5.textSize(11);
+    p5.textStyle(p5.BOLD);
+    p5.text("ESC", 22, 16);
+
+    p5.stroke(120, 120, 120);
+    p5.strokeWeight(1);
+    p5.line(48, 8, 48, 24);
+
+   
+    p5.fill(160, 160, 160);
+    p5.noStroke();
+    p5.textAlign(p5.LEFT, p5.CENTER);
+    p5.textSize(10);
+    p5.textStyle(p5.NORMAL);
+    p5.text("Para pausar", 54, 16);
+
+    
+    if (Math.sin(p5.frameCount * 0.05) > 0.5) {
+      p5.stroke(100, 150, 255, 100);
+      p5.strokeWeight(2);
+      p5.noFill();
+      p5.rect(-1, -1, 142, 34, 17);
+    }
+
+    p5.pop();
+  }
 
   addHit(damage: number) {
     this.comboCounter++;
-    this.comboTimer = 120; // 2 segundos para o próximo hit
+    this.comboTimer = 120;
   }
 
   addDamage(isPlayer: boolean) {
@@ -362,9 +405,9 @@ export class HUD {
       maxLife: 120,
       speed: 2
     });
-  }
-  resetTimer() {
-    this.roundTimer = 20; // 20 segundos por round
+  }  resetTimer() {
+    this.roundTimer = 30; 
+    this.frameCounter = 0;
   }
 
   pauseTimer() {
