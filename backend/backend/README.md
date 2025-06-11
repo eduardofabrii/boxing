@@ -19,35 +19,75 @@ Este é um backend Spring Boot para sistema de cadastro e login de usuários.
 
 ## 🔧 Configuração do Banco de Dados
 
-O projeto está configurado para conectar no MySQL com as seguintes configurações:
+### 🌟 **NOVA FUNCIONALIDADE: Variáveis de Ambiente**
 
+O projeto agora suporta configuração via **variáveis de ambiente** para maior flexibilidade e segurança!
+
+#### **Configuração Padrão:**
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/boxing_db?createDatabaseIfNotExist=true
-spring.datasource.username=root
-spring.datasource.password=
+DB_URL=jdbc:mysql://localhost:3306/boxing_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+DB_USERNAME=root
+DB_PASSWORD=
 ```
+
+#### **Variáveis de Ambiente Disponíveis:**
+- `DB_URL` - URL do banco de dados
+- `DB_USERNAME` - Usuário do banco
+- `DB_PASSWORD` - Senha do banco
+- `DB_DRIVER` - Driver do banco
+- `JPA_DDL_AUTO` - Estratégia do Hibernate (create-drop, update, validate)
+- `JPA_SHOW_SQL` - Mostrar SQL no console (true/false)
+- `SERVER_PORT` - Porta do servidor (padrão: 8080)
+
+### 📁 **Arquivos de Exemplo:**
+- `.env.example` - Documentação completa das variáveis
+- `start-with-env.bat` - Script para desenvolvimento
+- `start-production.bat` - Script para produção
 
 O banco `boxing_db` será criado automaticamente se não existir.
 
 ## 🛠️ Como Executar
 
-### Opção 1: Com H2 (Banco em Memória - Recomendado para testes)
+### 🚀 **Opção 1: Scripts Automáticos (RECOMENDADO)**
+
+#### **Desenvolvimento:**
+```bash
+start-with-env.bat
+```
+Configura automaticamente as variáveis e inicia com H2/MySQL.
+
+#### **Produção:**
+```bash
+# Configure as variáveis primeiro:
+set DB_URL=jdbc:mysql://servidor:3306/boxing_db
+set DB_USERNAME=usuario
+set DB_PASSWORD=senha
+
+# Execute:
+start-production.bat
+```
+
+### 🔧 **Opção 2: Manual com H2 (Banco em Memória)**
 ```bash
 cd backend/backend
 mvn clean compile
 mvn spring-boot:run --spring.profiles.active=dev
 ```
 
-### Opção 2: Com MySQL (Produção)
-1. **Inicie o MySQL Server**
-2. **Execute:**
-   ```bash
-   cd backend/backend
-   mvn clean compile
-   mvn spring-boot:run --spring.profiles.active=prod
-   ```
+### 🗄️ **Opção 3: Manual com MySQL**
+```bash
+# Configure as variáveis de ambiente:
+set DB_URL=jdbc:mysql://localhost:3306/boxing_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+set DB_USERNAME=root
+set DB_PASSWORD=
 
-### Opção 3: Usando JAR
+# Execute:
+cd backend/backend
+mvn clean compile
+mvn spring-boot:run --spring.profiles.active=prod
+```
+
+### 📦 **Opção 4: Usando JAR**
 ```bash
 mvn clean package -DskipTests
 java -jar target\backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev

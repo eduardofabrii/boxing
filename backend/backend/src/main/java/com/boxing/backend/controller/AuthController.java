@@ -81,13 +81,17 @@ public class AuthController {
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<UserResponseDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/health")
+    }    @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         Map<String, String> response = new HashMap<>();
         response.put("status", "API funcionando corretamente");
         response.put("timestamp", java.time.LocalDateTime.now().toString());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/debug/users-with-hash")
+    public ResponseEntity<List<Map<String, Object>>> getUsersWithHash() {
+        List<Map<String, Object>> usersWithHash = userService.getAllUsersWithHash();
+        return ResponseEntity.ok(usersWithHash);
     }
 }

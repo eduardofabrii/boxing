@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -101,9 +103,7 @@ public class UserService {
             );
         }
         return null;
-    }
-
-    public List<UserResponseDTO> getAllUsers() {
+    }    public List<UserResponseDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream()
             .map(user -> new UserResponseDTO(
@@ -112,6 +112,21 @@ public class UserService {
                 user.getEmail(),
                 user.getCreatedAt()
             ))
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getAllUsersWithHash() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+            .map(user -> {
+                Map<String, Object> userMap = new HashMap<>();
+                userMap.put("id", user.getId());
+                userMap.put("name", user.getName());
+                userMap.put("email", user.getEmail());
+                userMap.put("passwordHash", user.getPassword()); // Mostra o hash da senha
+                userMap.put("createdAt", user.getCreatedAt());
+                return userMap;
+            })
             .collect(Collectors.toList());
     }
 }
