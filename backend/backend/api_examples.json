@@ -1,0 +1,121 @@
+{
+  "api_examples": {
+    "base_url": "http://localhost:8080",
+    "endpoints": [
+      {
+        "name": "Health Check",
+        "method": "GET",
+        "url": "http://localhost:8080/api/auth/health",
+        "description": "Verifica se a API está funcionando"
+      },
+      {
+        "name": "Cadastro de Usuário",
+        "method": "POST",
+        "url": "http://localhost:8080/api/auth/register",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "João Silva",
+          "email": "joao@email.com",
+          "password": "123456"
+        },
+        "description": "Cadastra um novo usuário no sistema"
+      },
+      {
+        "name": "Login",
+        "method": "POST",
+        "url": "http://localhost:8080/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "joao@email.com",
+          "password": "123456"
+        },
+        "description": "Faz login com email e senha"
+      },
+      {
+        "name": "Buscar Usuário por ID",
+        "method": "GET",
+        "url": "http://localhost:8080/api/auth/user/1",
+        "description": "Busca um usuário específico pelo ID"
+      }
+    ],
+    "test_scenarios": [
+      {
+        "scenario": "Cadastro com dados válidos",
+        "request": {
+          "name": "Maria Santos",
+          "email": "maria@email.com",
+          "password": "senha123"
+        },
+        "expected_response": {
+          "message": "Usuário cadastrado com sucesso!",
+          "success": true,
+          "user": {
+            "id": "number",
+            "name": "Maria Santos",
+            "email": "maria@email.com",
+            "createdAt": "datetime"
+          }
+        }
+      },
+      {
+        "scenario": "Login com credenciais válidas",
+        "request": {
+          "email": "maria@email.com",
+          "password": "senha123"
+        },
+        "expected_response": {
+          "message": "Login realizado com sucesso!",
+          "success": true,
+          "user": {
+            "id": "number",
+            "name": "Maria Santos",
+            "email": "maria@email.com",
+            "createdAt": "datetime"
+          }
+        }
+      },
+      {
+        "scenario": "Cadastro com email duplicado",
+        "request": {
+          "name": "Outro Nome",
+          "email": "maria@email.com",
+          "password": "outrasenha"
+        },
+        "expected_response": {
+          "message": "Email já está em uso",
+          "success": false,
+          "user": null
+        }
+      },
+      {
+        "scenario": "Login com senha incorreta",
+        "request": {
+          "email": "maria@email.com",
+          "password": "senhaerrada"
+        },
+        "expected_response": {
+          "message": "Credenciais inválidas",
+          "success": false,
+          "user": null
+        }
+      },
+      {
+        "scenario": "Cadastro com dados inválidos",
+        "request": {
+          "name": "",
+          "email": "email-invalido",
+          "password": "123"
+        },
+        "expected_response": {
+          "name": "Nome é obrigatório",
+          "email": "Email deve ser válido",
+          "password": "Senha deve ter pelo menos 6 caracteres"
+        }
+      }
+    ]
+  }
+}
