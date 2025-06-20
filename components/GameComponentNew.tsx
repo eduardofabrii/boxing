@@ -6,6 +6,7 @@ import { ParticleSystem } from "./ParticleSystem"
 import { BackgroundRenderer } from "./BackgroundRenderer"
 import { HUD } from "./HUD"
 import { Play, Square, Pause } from "lucide-react"
+import { DifficultyLevel } from "./DifficultySelector"
 
 const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
   ssr: false,
@@ -15,6 +16,8 @@ interface GameComponentProps {
   onGameOver: (result: string, score: number) => void
   round: number
   initialScore: number
+  difficulty: DifficultyLevel
+  playerNickname: string
 }
 
 type PunchType = "jab" | "cross" | "hook" | "uppercut";
@@ -993,27 +996,97 @@ export default function GameComponentNew({
   onGameOver,
   round,
   initialScore,
-}: GameComponentProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
+  difficulty,
+  playerNickname,
+}: GameComponentProps) {  const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [score, setScore] = useState(initialScore)
-  const [gameEnded, setGameEnded] = useState(false)
-
+  const [gameEnded, setGameEnded] = useState(false)// Calcular modificadores baseados na dificuldade
+  const getDifficultyModifiers = () => {
+    switch (difficulty) {
+      case "easy":
+        return {
+          playerDamageReduction: 0.7, // Jogador recebe 30% menos dano
+          enemySpeedMultiplier: 0.7,
+          enemyDamageMultiplier: 0.7,
+          enemyAggressionMultiplier: 0.8,
+          scoreMultiplier: 1.0,
+          difficultyLevel: 1
+        }
+      case "medium":
+        return {
+          playerDamageReduction: 1.0, // Dano normal
+          enemySpeedMultiplier: 1.0,
+          enemyDamageMultiplier: 1.0,
+          enemyAggressionMultiplier: 1.0,
+          scoreMultiplier: 1.5,
+          difficultyLevel: 2
+        }
+      case "hard":
+        return {
+          playerDamageReduction: 1.3, // Jogador recebe 30% mais dano
+          enemySpeedMultiplier: 1.3,
+          enemyDamageMultiplier: 1.3,
+          enemyAggressionMultiplier: 1.2,
+          scoreMultiplier: 2.0,
+          difficultyLevel: 3
+        }
+      case "legendary":
+        return {
+          playerDamageReduction: 1.6, // Jogador recebe 60% mais dano
+          enemySpeedMultiplier: 1.6,
+          enemyDamageMultiplier: 1.6,
+          enemyAggressionMultiplier: 1.5,
+          scoreMultiplier: 3.0,
+          difficultyLevel: 4
+        }
+      default:
+        return {
+          playerDamageReduction: 1.0,
+          enemySpeedMultiplier: 1.0,
+          enemyDamageMultiplier: 1.0,
+          enemyAggressionMultiplier: 1.0,
+          scoreMultiplier: 1.5,
+          difficultyLevel: 2      }
+    }
+  }
+  
+  // Armazenar modificadores de dificuldade
+  const difficultyModifiersRef = useRef(getDifficultyModifiers())
+  
   const playerRef = useRef<Player | null>(null)
   const enemyRef = useRef<Enemy | null>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const backgroundRef = useRef<BackgroundRenderer | null>(null)
   const hudRef = useRef<HUD | null>(null)
+  
   const setup = (p5: any, canvasParentRef: any) => {
     p5.createCanvas(800, 600).parent(canvasParentRef)
     
-    playerRef.current = new Player(p5, 200, 350, "player")
+    const difficultyMods = getDifficultyModifiers()
+      playerRef.current = new Player(p5, 200, 350, "player")
     enemyRef.current = new Enemy(p5, 600, 350, "enemy", round)
+    
+    // Garantir que ambos tenham vida máxima de 500
+    if (playerRef.current) {
+      playerRef.current.maxHealth = 500
+      playerRef.current.health = 500
+    }
+    
+    if (enemyRef.current) {
+      enemyRef.current.maxHealth = 500
+      enemyRef.current.health = 500
+      enemyRef.current.moveSpeed = enemyRef.current.moveSpeed * difficultyMods.enemySpeedMultiplier
+      enemyRef.current.difficulty = difficultyMods.difficultyLevel
+      // Aplicar modificador de agressividade (será usado na IA)
+      enemyRef.current.aggressiveness = enemyRef.current.aggressiveness * difficultyMods.enemyAggressionMultiplier
+    }
+    
     particlesRef.current = new ParticleSystem(p5)
     backgroundRef.current = new BackgroundRenderer(p5)
     hudRef.current = new HUD(p5)
     
-    // Reset do timer a cada round
+  
     hudRef.current.resetTimer()
     
     setIsPlaying(true)
@@ -1066,7 +1139,7 @@ export default function GameComponentNew({
     if (gameEnded) {      player.draw()
       enemy.draw()
       particles.draw()
-      hud.draw(player.health, enemy.health, score, round, "")
+      hud.draw(player.health, enemy.health, score, round, "", playerNickname)
       return
     }
 
@@ -1089,15 +1162,15 @@ export default function GameComponentNew({
         default: hitRange = 60
       }
 
-      if (distance < hitRange && !enemy.isHit) {
-        const damage = player.getPunchDamage()
+      if (distance < hitRange && !enemy.isHit) {        const damage = player.getPunchDamage()
         enemy.takeDamage(damage, player.punchType)
         
         particles.addHitEffect(enemy.position.x, enemy.position.y, damage)
         particles.addPunchEffect(punchPos.x, punchPos.y, player.punchType)
         
         hud.addHit(damage)
-        setScore(prev => prev + damage * 10)
+        const difficultyMods = getDifficultyModifiers()
+        setScore(prev => prev + Math.floor(damage * 10 * difficultyMods.scoreMultiplier))
 
         backgroundRef.current?.onPunchLanded(damage / 30)
         if (enemy.isKnockedOut) {
@@ -1125,19 +1198,17 @@ export default function GameComponentNew({
         case "hook": hitRange = 60; break
         case "uppercut": hitRange = 55; break
         default: hitRange = 60
-      }
-
-      if (distance < hitRange && !player.isHit) {
-        const damage = enemy.getPunchDamage()
-        player.takeDamage(damage, enemy.punchType)
+      }      if (distance < hitRange && !player.isHit) {
+        const baseDamage = enemy.getPunchDamage()
+        const adjustedDamage = Math.floor(baseDamage * difficultyModifiersRef.current.playerDamageReduction)
+        player.takeDamage(adjustedDamage, enemy.punchType)
         
-        particles.addHitEffect(player.position.x, player.position.y, damage)
+        particles.addHitEffect(player.position.x, player.position.y, adjustedDamage)
         particles.addPunchEffect(punchPos.x, punchPos.y, enemy.punchType)
-        
-        hud.addDamage(true)
+          hud.addDamage(true)
         hud.resetCombo()
         
-        backgroundRef.current?.onPunchLanded(damage / 30)
+        backgroundRef.current?.onPunchLanded(adjustedDamage / 30)
         if (player.isKnockedOut) {
           backgroundRef.current?.onKnockdown()
         }
@@ -1147,7 +1218,7 @@ export default function GameComponentNew({
       } else {
       }
     }    particles.draw()
-    hud.draw(player.health, enemy.health, score, round, player.isPunching ? player.punchType : "")
+    hud.draw(player.health, enemy.health, score, round, player.isPunching ? player.punchType : "", playerNickname)
 
     // Verificação de fim de jogo - CORRIGIDA
     if (player.health <= 0 && !gameEnded) {

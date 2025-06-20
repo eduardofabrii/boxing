@@ -41,12 +41,15 @@ export class HUD {
         this.frameCounter = 0;
       }
     }
-  }  draw(playerHealth: number, enemyHealth: number, score: number, round: number, punchType: string) {
+  }  draw(playerHealth: number, enemyHealth: number, score: number, round: number, punchType: string, playerNickname?: string) {
     this.drawHealthBars(playerHealth, enemyHealth);
     this.drawTimer();
     this.drawComboMeter();
     this.drawScorePopups();
     this.drawPauseIndicator();
+    if (playerNickname) {
+      this.drawPlayerNickname(playerNickname);
+    }
   }
   private drawHealthBars(playerHealth: number, enemyHealth: number) {
     const p5 = this.p5;
@@ -357,7 +360,6 @@ export class HUD {
 
     p5.pop();
   }
-
   addHit(damage: number) {
     this.comboCounter++;
     this.comboTimer = 120;
@@ -429,6 +431,44 @@ export class HUD {
 
   getCombo(): number {
     return this.comboCounter;
+  }  private drawPlayerNickname(nickname: string) {
+    // Posição logo abaixo da barra de vida do jogador
+    const x = 20; // Mesmo x da barra de vida
+    const y = 50; // Logo abaixo da barra de vida que termina em y=35 (15 + 20)
+
+    // Fundo do nickname
+    this.p5.fill(0, 0, 0, 120);
+    this.p5.noStroke();
+    this.p5.rect(x, y - 10, 140, 22, 3);
+
+    // Borda colorida mais sutil
+    this.p5.stroke(76, 175, 80, 180); // Verde para o jogador, com transparência
+    this.p5.strokeWeight(1);
+    this.p5.noFill();
+    this.p5.rect(x, y - 10, 140, 22, 3);
+
+    // Ícone do jogador
+    this.p5.fill(76, 175, 80);
+    this.p5.noStroke();
+    this.p5.textAlign(this.p5.LEFT, this.p5.CENTER);
+    this.p5.textSize(12);
+    this.p5.text("👤", x + 8, y);
+
+    // Nome do jogador
+    this.p5.fill(255, 255, 255);
+    this.p5.textAlign(this.p5.LEFT, this.p5.CENTER);
+    this.p5.textSize(11);
+    this.p5.textStyle(this.p5.BOLD);
+    
+    // Truncar o nome se for muito longo
+    const displayName = nickname.length > 12 ? nickname.substring(0, 12) + "..." : nickname;
+    this.p5.text(displayName, x + 25, y);
+
+    // Label "PLAYER" menor e mais discreto
+    this.p5.fill(76, 175, 80, 150);
+    this.p5.textSize(7);
+    this.p5.textStyle(this.p5.NORMAL);
+    this.p5.text("PLAYER", x + 8, y + 8);
   }
 }
 

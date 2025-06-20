@@ -1,19 +1,22 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Trophy, Skull, Rocket, RotateCcw, Home, HandHeart } from "lucide-react"
+import { Trophy, Skull, Rocket, RotateCcw, Home, HandHeart, Crown, Shield, Zap, Sword } from "lucide-react"
 import Image from "next/image"
+import { DifficultyLevel } from "./DifficultySelector"
 
 interface GameOverProps {
   winner: string
   score: number
   round: number
+  difficulty?: DifficultyLevel
+  playerNickname?: string
   onRestart: () => void
   onContinue?: () => void
   onMainMenu: () => void
 }
 
-export default function GameOver({ winner, score, round, onRestart, onContinue, onMainMenu }: GameOverProps) {
+export default function GameOver({ winner, score, round, difficulty, playerNickname, onRestart, onContinue, onMainMenu }: GameOverProps) {
   const isVictory = winner === "player"
   const isDraw = winner === "draw"
   
@@ -49,8 +52,20 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
   const getMessage = () => {
     if (isVictory) return "Congratulations! You are the Boxing Champion!"
     if (isDraw) return "Great fight! It's a tie!"
-    return "You were knocked out! Train harder!"
   }
+
+  const getDifficultyInfo = () => {
+    if (!difficulty) return null;
+    
+    const difficultyData: { [key in DifficultyLevel]: { name: string, icon: any, color: string, multiplier: string } } = {
+      easy: { name: 'Iniciante', icon: Shield, color: 'text-green-400', multiplier: 'x1.0' },
+      medium: { name: 'Intermediário', icon: Zap, color: 'text-yellow-400', multiplier: 'x1.5' },
+      hard: { name: 'Difícil', icon: Sword, color: 'text-orange-400', multiplier: 'x2.0' },
+      legendary: { name: 'Lendário', icon: Crown, color: 'text-purple-400', multiplier: 'x3.0' }
+    };
+    
+    return difficultyData[difficulty];
+  };
 
   const colors = getColorClasses()
     return (
@@ -71,10 +86,17 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
             <h2 className="text-xl font-bold text-yellow-400 mb-2">🏆 CHAMPION! 🏆</h2>
             <p className="text-yellow-200 text-sm">You are the Boxing Champion!</p>
           </div>
-        )}
-        
-        {/* Stats */}
+        )}        {/* Stats */}
         <div className="space-y-3 p-4 bg-gray-800/50 rounded-xl border border-gray-600/30">
+          {playerNickname && (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300 font-medium">Lutador:</span>
+              <div className="flex items-center gap-2">
+                <span className="text-green-400">👤</span>
+                <span className="text-white font-bold">{playerNickname}</span>
+              </div>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <span className="text-gray-300 font-medium">Round:</span>
             <span className="text-white font-bold text-xl">{round}</span>
@@ -83,6 +105,29 @@ export default function GameOver({ winner, score, round, onRestart, onContinue, 
             <span className="text-gray-300 font-medium">Final Score:</span>
             <span className="text-yellow-400 font-bold text-xl">{score}</span>
           </div>
+          {difficulty && (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300 font-medium">Dificuldade:</span>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const diffInfo = getDifficultyInfo();
+                  if (!diffInfo) return null;
+                  const IconComponent = diffInfo.icon;
+                  return (
+                    <>
+                      <IconComponent className={`w-4 h-4 ${diffInfo.color}`} />
+                      <span className={`font-bold ${diffInfo.color}`}>
+                        {diffInfo.name}
+                      </span>
+                      <span className="text-gray-400 text-sm">
+                        ({diffInfo.multiplier})
+                      </span>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
         </div>
           <p className={`text-lg font-medium ${colors.textColor}`}>
           {getMessage()}
