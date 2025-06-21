@@ -1,3 +1,6 @@
+João Vitor Correa Oliveira
+Eduardo Henrique Fabri
+
 # 🥊 Boxing Clash: Final Round
 
 Um jogo de boxe interativo desenvolvido em React/Next.js com gráficos em p5.js, sistema de som avançado e múltiplos níveis de dificuldade.
