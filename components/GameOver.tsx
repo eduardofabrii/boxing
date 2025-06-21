@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { Trophy, Skull, Rocket, RotateCcw, Home, HandHeart, Crown, Shield, Zap, Sword } from "lucide-react"
-import Image from "next/image"
 import { DifficultyLevel } from "./DifficultySelector"
 
 interface GameOverProps {
@@ -27,9 +26,9 @@ export default function GameOver({ winner, score, round, difficulty, playerNickn
   }
 
   const getTitle = () => {
-    if (isVictory) return "VICTORY!"
-    if (isDraw) return "DRAW!"
-    return "DEFEAT!"
+    if (isVictory) return "VITÓRIA!"
+    if (isDraw) return "EMPATE!"
+    return "DERROTA!"
   }
 
   const getColorClasses = () => {

@@ -7,6 +7,7 @@ import { BackgroundRenderer } from "./BackgroundRenderer"
 import { HUD } from "./HUD"
 import { Play, Square, Pause } from "lucide-react"
 import { DifficultyLevel } from "./DifficultySelector"
+import { SoundManager } from "./SoundManager"
 
 const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
   ssr: false,
@@ -36,6 +37,10 @@ class Player {
   public hitTimer: number
   public isKnockedOut: boolean
   public knockoutTimer: number
+  public isFalling: boolean
+  public fallTimer: number
+  public fallProgress: number
+  public maxFallFrames: number
   public stunned: boolean
   public stunnedTimer: number
   public size: number
@@ -72,6 +77,10 @@ class Player {
     this.hitTimer = 0
     this.isKnockedOut = false
     this.knockoutTimer = 0
+    this.isFalling = false
+    this.fallTimer = 0
+    this.fallProgress = 0
+    this.maxFallFrames = 60
     this.stunned = false
     this.stunnedTimer = 0
     this.size = 40
@@ -113,12 +122,27 @@ class Player {
     this.leftArm = { x: -20, y: -8, angle: -0.4 }
     this.rightArm = { x: 20, y: -8, angle: 0.4 }
   }
-
   update() {
+    // Animação de queda para o nocaute
+    if (this.isFalling) {
+      this.fallTimer++
+      this.fallProgress = this.fallTimer / this.maxFallFrames
+      
+      if (this.fallTimer >= this.maxFallFrames) {
+        this.isFalling = false
+        this.isKnockedOut = true
+        this.knockoutTimer = 300 // 5 segundos de nocaute
+      }
+      return
+    }
+
     if (this.isKnockedOut) {
       this.knockoutTimer--
       if (this.knockoutTimer <= 0) {
         this.isKnockedOut = false
+        this.isFalling = false
+        this.fallTimer = 0
+        this.fallProgress = 0
         this.health = Math.max(1, this.health)
       }
       return
@@ -408,7 +432,6 @@ class Player {
       this.rightArm.x = 20 + 85 * extendFactor
       this.rightArm.y = -20 + 15 * extendFactor // Começa bem alto
       this.rightArm.angle = -0.5 - 0.8 * extendFactor
-      
       this.leftArm.x = -20 - 15 * extendFactor
       this.leftArm.y = -8 + 8 * extendFactor
       this.leftArm.angle = -0.4 + 0.2 * extendFactor
@@ -416,7 +439,6 @@ class Player {
       this.leftArm.x = -20 - 85 * extendFactor
       this.leftArm.y = -20 + 15 * extendFactor
       this.leftArm.angle = 0.5 + 0.8 * extendFactor
-      
       this.rightArm.x = 20 + 15 * extendFactor
       this.rightArm.y = -8 + 8 * extendFactor
       this.rightArm.angle = 0.4 - 0.2 * extendFactor
@@ -426,16 +448,19 @@ class Player {
   }
 
   resetArmPosition() {
-    // Volta para a posição de guarda alta
     this.leftArm = { x: -20, y: -8, angle: -0.4 }
     this.rightArm = { x: 20, y: -8, angle: 0.4 }
   }
-
   draw() {
     const p5 = this.p5
 
     if (this.isKnockedOut) {
       this.drawKnockedOut()
+      return
+    }
+
+    if (this.isFalling) {
+      this.drawFalling()
       return
     }
 
@@ -459,6 +484,36 @@ class Player {
     p5.drawingContext.shadowBlur = 0
     p5.pop()
 
+    this.drawShadow()
+  }
+
+  drawFalling() {
+    const p5 = this.p5
+    
+    const fallEase = 1 - Math.pow(1 - this.fallProgress, 3)
+    const rotation = fallEase * (p5.PI / 2)
+    const verticalOffset = fallEase * 40 
+    
+    p5.push()
+    p5.translate(this.position.x, this.position.y + verticalOffset)
+    p5.rotate(rotation)
+    
+    if (this.fallProgress < 0.8) {
+      p5.translate(p5.random(-2, 2), p5.random(-2, 2))
+    }
+    
+    this.drawBody()
+    this.drawHead()
+    this.drawArms()
+    
+    if (this.fallProgress > 0.9) {
+      p5.fill(255, 255, 255, 100)
+      p5.noStroke()
+      p5.ellipse(0, 50, 80, 20) 
+    }
+    
+    p5.pop()
+    
     this.drawShadow()
   }
 
@@ -644,7 +699,6 @@ class Player {
     p5.noStroke()
     p5.ellipse(-10, -8, 8, 12)
     
-    // Luva esquerda
     p5.push()
     p5.translate(0, 30)
     if (this.leftGloveImg && this.leftGloveImg.width > 0) {
@@ -666,7 +720,6 @@ class Player {
     p5.pop()
     p5.pop()
 
-    // Braço direito
     p5.push()
     p5.translate(this.rightArm.x, this.rightArm.y)
     p5.rotate(this.rightArm.angle)
@@ -683,7 +736,6 @@ class Player {
     p5.noStroke()
     p5.ellipse(10, -8, 8, 12)
     
-    // Luva direita
     p5.push()
     p5.translate(0, 30)
     if (this.rightGloveImg && this.rightGloveImg.width > 0) {
@@ -730,43 +782,158 @@ class Player {
     p5.noStroke()
     p5.ellipse(this.position.x, this.position.y + 80, this.size * 1.5, this.size * 0.3)
   }
-
   drawKnockedOut() {
     const p5 = this.p5
     
     p5.push()
-    p5.translate(this.position.x, this.position.y + 40)
+    p5.translate(this.position.x, this.position.y + 60)
+    
+    const breathingOffset = Math.sin(p5.frameCount * 0.01) * 1
+    
+    this.drawKnockedOutBody(breathingOffset)
+    
+    this.drawKnockedOutHead(breathingOffset)
+    
+    this.drawKnockedOutArms()
+    
+    this.drawKnockedOutLegs()
+    
+    this.drawKnockoutEffects()
+    
+    p5.pop()
+  }
 
+  drawKnockedOutBody(breathingOffset: number) {
+    const p5 = this.p5
+    
+    p5.fill(this.trunkColor)
+    p5.stroke(0)
+    p5.strokeWeight(1)
+    p5.ellipse(-10, -15 + breathingOffset, 35, 50)
+    
+    p5.fill(p5.lerpColor(this.trunkColor, p5.color(0), 0.3))
+    p5.noStroke()
+    p5.ellipse(-8, -10 + breathingOffset, 30, 45)
+    
+    p5.fill(p5.lerpColor(this.trunkColor, p5.color(255), 0.2))
+    p5.ellipse(-15, -20 + breathingOffset, 20, 25)
+  }
+
+  drawKnockedOutHead(breathingOffset: number) {
+    const p5 = this.p5
+    
+    p5.push()
+    p5.translate(-35, -30 + breathingOffset)
+    
+    if (this.headImg && this.headImg.width > 0) {
+      p5.push()
+      p5.rotate(p5.PI / 2) 
+      p5.scale(0.7) 
+      p5.image(this.headImg, -this.size/2, -this.size/2, this.size, this.size)
+      p5.pop()
+    } else {
+      p5.fill(this.skinColor)
+      p5.stroke(0)
+      p5.strokeWeight(1)
+      p5.ellipse(0, 0, this.size * 0.8, this.size * 0.6)
+      
+      p5.fill(this.hairColor)
+      p5.noStroke()
+      p5.arc(0, 0, this.size * 0.8, this.size * 0.4, p5.PI, p5.TWO_PI)
+      
+      p5.fill(0)
+      p5.stroke(0)
+      p5.strokeWeight(2)
+      p5.line(-8, -2, -4, -2)
+      p5.line(4, -2, 8, -2)   
+      
+      p5.fill(139, 69, 19)
+      p5.noStroke()
+      p5.ellipse(0, 8, 6, 4)
+    }
+    
+    p5.pop()
+  }
+
+  drawKnockedOutArms() {
+    const p5 = this.p5
+    
+    p5.push()
+    p5.translate(-50, -5)
+    
     p5.fill(this.skinColor)
     p5.stroke(0)
     p5.strokeWeight(1)
-    p5.ellipse(0, 0, this.size * 1.5, this.size * 0.8)
-
-    p5.ellipse(-30, 0, this.size * 0.7, this.size * 0.7)
-
-    p5.noFill()
-    p5.stroke(0)
-    p5.strokeWeight(2)
-    for (let i = 0; i < 3; i++) {
-      p5.circle(-40 + i * 2, -5 + i, 8 - i * 2)
-      p5.circle(-20 + i * 2, -5 + i, 8 - i * 2)
+    p5.ellipse(0, 0, 12, 25)
+    
+    if (this.leftGloveImg && this.leftGloveImg.width > 0) {
+      p5.push()
+      p5.translate(0, 15)
+      p5.scale(0.6)
+      p5.image(this.leftGloveImg, -10, -10, 20, 20)
+      p5.pop()
+    } else {
+      p5.fill(this.gloveColor)
+      p5.ellipse(0, 15, 16, 12)
     }
+    p5.pop()
+    
+    p5.push()
+    p5.translate(15, 5)
+    
+    p5.fill(this.skinColor)
+    p5.stroke(0)
+    p5.strokeWeight(1)
+    p5.ellipse(0, 0, 12, 25)
+    
+    if (this.rightGloveImg && this.rightGloveImg.width > 0) {
+      p5.push()
+      p5.translate(0, 15)
+      p5.scale(0.6)
+      p5.image(this.rightGloveImg, -10, -10, 20, 20)
+      p5.pop()
+    } else {
+      p5.fill(this.gloveColor)
+      p5.ellipse(0, 15, 16, 12)
+    }
+    p5.pop()
+  }
 
-    for (let i = 0; i < 5; i++) {
-      const angle = (p5.TWO_PI * i) / 5 + p5.frameCount * 0.05
-      const x = -30 + 50 * p5.cos(angle)
-      const y = -20 + 30 * p5.sin(angle)
+  drawKnockedOutLegs() {
+    const p5 = this.p5
+    
+    p5.fill(this.skinColor)
+    p5.stroke(0)
+    p5.strokeWeight(1)
+    p5.rect(5, 15, 8, 35, 3) 
+    p5.rect(7, 45, 6, 30, 3) 
+    
+    p5.rect(15, 10, 8, 35, 3) 
+    p5.rect(17, 40, 6, 30, 3) 
+    
+    p5.fill(0) 
+    p5.rect(5, 70, 12, 8, 2) 
+    p5.rect(15, 65, 12, 8, 2) 
+  }
 
-      p5.fill(255, 255, 0)
+  drawKnockoutEffects() {
+    const p5 = this.p5
+    
+    for (let i = 0; i < 3; i++) {
+      const angle = (p5.TWO_PI * i) / 3 + p5.frameCount * 0.02
+      const x = -35 + 25 * p5.cos(angle)
+      const y = -50 + 15 * p5.sin(angle)
+
+      p5.fill(255, 255, 0, 150)
       p5.noStroke()
       p5.push()
       p5.translate(x, y)
-      p5.rotate(p5.frameCount * 0.1)
+      p5.rotate(p5.frameCount * 0.05)
       
       p5.beginShape()
-      for (let j = 0; j < 10; j++) {
-        const radius = j % 2 === 0 ? 8 : 4
-        const starAngle = (p5.TWO_PI * j) / 10
+      for (let j = 0; j < 8; j++) {
+        const radius = j % 2 === 0 ? 4 : 2
+        const starAngle = (p5.TWO_PI * j) / 8
         const px = radius * p5.cos(starAngle)
         const py = radius * p5.sin(starAngle)
         p5.vertex(px, py)
@@ -774,8 +941,18 @@ class Player {
       p5.endShape(p5.CLOSE)
       p5.pop()
     }
-
-    p5.pop()
+    if (p5.frameCount % 60 < 30) {
+      p5.fill(135, 206, 235, 100)
+      p5.noStroke()
+      for (let i = 0; i < 3; i++) {
+        const dropX = -40 + p5.random(-5, 5)
+        const dropY = -25 + p5.random(-3, 3)
+        p5.ellipse(dropX, dropY, 3, 4)
+      }    }    p5.pop()
+    
+    p5.fill(0, 0, 0, 80)
+    p5.noStroke()
+    p5.ellipse(this.position.x - 10, this.position.y + 85, this.size * 2, this.size * 0.5)
   }
 
   punch(type: PunchType = "jab") {
@@ -803,7 +980,6 @@ class Player {
     }
     return false
   }
-
   takeDamage(amount: number, punchType: string) {
     this.health -= amount
     this.isHit = true
@@ -811,11 +987,31 @@ class Player {
 
     if (this.health <= 0) {
       this.health = 0
-      this.isKnockedOut = true
-      this.knockoutTimer = 180
+      this.startKnockoutAnimation()
     } else if (this.health < this.maxHealth * 0.3) {
       this.stunned = true
       this.stunnedTimer = 30
+    }
+  }
+
+  startKnockoutAnimation() {
+    this.isFalling = true
+    this.fallTimer = 0
+    this.fallProgress = 0
+    
+    this.addImpactEffect()
+  }
+
+  addImpactEffect() {
+    for (let i = 0; i < 8; i++) {
+      this.sweatDrops.push({
+        x: this.p5.random(-30, 30),
+        y: this.p5.random(-10, 10),
+        vx: this.p5.random(-3, 3),
+        vy: this.p5.random(-2, -4),
+        size: this.p5.random(3, 6),
+        life: this.p5.floor(this.p5.random(30, 60)),
+      })
     }
   }
 
@@ -870,13 +1066,11 @@ class Player {
       jab: 15,
       cross: 25,
       hook: 20,
-      uppercut: 30
-    }
+      uppercut: 30    }
 
     return this.punchType && baseDamage[this.punchType as PunchType] ? baseDamage[this.punchType as PunchType] : 15
   }
-  }
-
+}
 
 class Enemy extends Player {
   public attackTimer: number
@@ -1050,15 +1244,14 @@ export default function GameComponentNew({
           difficultyLevel: 2      }
     }
   }
-  
-  // Armazenar modificadores de dificuldade
+    // Armazenar modificadores de dificuldade
   const difficultyModifiersRef = useRef(getDifficultyModifiers())
-  
   const playerRef = useRef<Player | null>(null)
   const enemyRef = useRef<Enemy | null>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const backgroundRef = useRef<BackgroundRenderer | null>(null)
   const hudRef = useRef<HUD | null>(null)
+  const soundManagerRef = useRef<SoundManager | null>(null)
   
   const setup = (p5: any, canvasParentRef: any) => {
     p5.createCanvas(800, 600).parent(canvasParentRef)
@@ -1081,11 +1274,15 @@ export default function GameComponentNew({
       // Aplicar modificador de agressividade (será usado na IA)
       enemyRef.current.aggressiveness = enemyRef.current.aggressiveness * difficultyMods.enemyAggressionMultiplier
     }
-    
-    particlesRef.current = new ParticleSystem(p5)
+      particlesRef.current = new ParticleSystem(p5)
     backgroundRef.current = new BackgroundRenderer(p5)
     hudRef.current = new HUD(p5)
+    soundManagerRef.current = new SoundManager()
     
+    // Inicializar e tocar música de fundo
+    soundManagerRef.current.initialize().then(() => {
+      soundManagerRef.current?.playBackgroundMusic()
+    })
   
     hudRef.current.resetTimer()
     
@@ -1096,7 +1293,6 @@ export default function GameComponentNew({
 
     const player = playerRef.current
     if (player && !gameEnded && !isPaused) {
-      // Movimento com WASD + Setas do teclado
       if (p5.keyIsDown(65) || p5.keyIsDown(p5.LEFT_ARROW)) { // A ou ←
         player.position.x -= player.moveSpeed
         player.facingRight = false
@@ -1107,29 +1303,29 @@ export default function GameComponentNew({
       }
       if (p5.keyIsDown(87) || p5.keyIsDown(p5.UP_ARROW)) { // W ou ↑
         player.position.y -= player.moveSpeed
-      }
-      if (p5.keyIsDown(83) || p5.keyIsDown(p5.DOWN_ARROW)) { // S ou ↓
+      }      if (p5.keyIsDown(83) || p5.keyIsDown(p5.DOWN_ARROW)) { // S ou ↓
         player.position.y += player.moveSpeed
       }
     }
-
+    
     const enemy = enemyRef.current
     const particles = particlesRef.current
     const background = backgroundRef.current
     const hud = hudRef.current
+    const soundManager = soundManagerRef.current
 
-    if (!player || !enemy || !particles || !background || !hud) return    p5.background(220)
+    if (!player || !enemy || !particles || !background || !hud || !soundManager) return
+
+    p5.background(220)
     background.update()
     background.draw()
 
     player.update()
     enemy.update(player)
     
-    // Atualizar sistemas
     particles.update()
     hud.update()
     
-    // Sincronizar pausa do HUD
     if (isPaused) {
       hud.pauseTimer()
     } else {
@@ -1160,10 +1356,11 @@ export default function GameComponentNew({
         case "hook": hitRange = 60; break
         case "uppercut": hitRange = 55; break
         default: hitRange = 60
-      }
-
-      if (distance < hitRange && !enemy.isHit) {        const damage = player.getPunchDamage()
+      }      if (distance < hitRange && !enemy.isHit) {        const damage = player.getPunchDamage()
         enemy.takeDamage(damage, player.punchType)
+        
+        soundManager.playPunchSound(player.punchType)
+        soundManager.playHitSound()
         
         particles.addHitEffect(enemy.position.x, enemy.position.y, damage)
         particles.addPunchEffect(punchPos.x, punchPos.y, player.punchType)
@@ -1173,18 +1370,16 @@ export default function GameComponentNew({
         setScore(prev => prev + Math.floor(damage * 10 * difficultyMods.scoreMultiplier))
 
         backgroundRef.current?.onPunchLanded(damage / 30)
-        if (enemy.isKnockedOut) {
-          backgroundRef.current?.onKnockdown()
+        if (enemy.isKnockedOut) {          backgroundRef.current?.onKnockdown()
+          soundManager.playKnockoutSound()
         }
 
         backgroundRef.current?.addCameraShake(5, 10)
-        backgroundRef.current?.setCrowdExcitement(0.8)
 
         player.isPunching = false
       }
     }
 
-    // Verificação de colisões do inimigo
     if (enemy.isPunchActive()) {      
       const punchPos = enemy.getPunchPosition()
       const distance = enemy.p5.dist(
@@ -1203,6 +1398,9 @@ export default function GameComponentNew({
         const adjustedDamage = Math.floor(baseDamage * difficultyModifiersRef.current.playerDamageReduction)
         player.takeDamage(adjustedDamage, enemy.punchType)
         
+        soundManager.playPunchSound(enemy.punchType)
+        soundManager.playHitSound()
+        
         particles.addHitEffect(player.position.x, player.position.y, adjustedDamage)
         particles.addPunchEffect(punchPos.x, punchPos.y, enemy.punchType)
           hud.addDamage(true)
@@ -1211,33 +1409,43 @@ export default function GameComponentNew({
         backgroundRef.current?.onPunchLanded(adjustedDamage / 30)
         if (player.isKnockedOut) {
           backgroundRef.current?.onKnockdown()
+          soundManager.playKnockoutSound()
         }
         
         backgroundRef.current?.addCameraShake(3, 8);
         enemy.isPunching = false 
-      } else {
-      }
-    }    particles.draw()
+      } else {      }
+    }
+    
+    particles.draw()
     hud.draw(player.health, enemy.health, score, round, player.isPunching ? player.punchType : "", playerNickname)
-
-    // Verificação de fim de jogo - CORRIGIDA
+    
     if (player.health <= 0 && !gameEnded) {
       setGameEnded(true)
-      setTimeout(() => onGameOver("enemy", score), 2000) // Player perdeu = "enemy" venceu
+      soundManager.playKnockoutSound()
+      setTimeout(() => onGameOver("enemy", score), 2000)
     } else if (enemy.health <= 0 && !gameEnded) {
       setGameEnded(true)
-      setTimeout(() => onGameOver("player", score), 2000) // Player venceu = "player"
+      soundManager.playVictorySound()
+      setTimeout(() => onGameOver("player", score), 2000) 
     } else if (hud.getTimeRemaining() <= 0 && !gameEnded) {
       // Fim por tempo - quem tem mais vida vence
       setGameEnded(true)
-      const result = player.health > enemy.health ? "player" : 
+      soundManager.playBellSound()
+      
+      const result = player.health > enemy.health ? "player" :
                     enemy.health > player.health ? "enemy" : "draw"
+      
+      if (result === "player") {
+        setTimeout(() => soundManager.playVictorySound(), 1000)
+      }
+      
       setTimeout(() => onGameOver(result, score), 2000)
     }
   }
-  
-  const keyPressed = (p5: any) => {
+    const keyPressed = (p5: any) => {
     const player = playerRef.current
+    const soundManager = soundManagerRef.current
     if (!player || gameEnded) return
     if (p5.keyCode === 27) {
       setIsPaused(!isPaused)
@@ -1246,32 +1454,52 @@ export default function GameComponentNew({
 
     if (isPaused) return
 
-    // Verifica se é SPACE (código 32)
     if (p5.keyCode === 32) {
-      player.punch("jab")
+      if (player.punch("jab")) {
+        soundManager?.playPunchSound("jab")
+      }
       return
     }
 
     switch (p5.key.toLowerCase()) {
       case 'x':
-        player.punch("uppercut")
+        if (player.punch("uppercut")) {
+          soundManager?.playPunchSound("uppercut")
+        }
         break
       case 'z':
-        player.punch("hook")
+        if (player.punch("hook")) {
+          soundManager?.playPunchSound("hook")
+        }
         break
       case 'c':
-        player.punch("cross")
-        break
-    }
+        if (player.punch("cross")) {
+          soundManager?.playPunchSound("cross")
+        }
+        break    }
   }
+  
   const handleContinueGame = () => {
     setIsPaused(false)
+    if (soundManagerRef.current) {
+      soundManagerRef.current.playBackgroundMusic()
+    }
   }
-
   const handleQuitGame = () => {
     setGameEnded(true)
+    if (soundManagerRef.current) {
+      soundManagerRef.current.stopBackgroundMusic()
+    }
     onGameOver("quit", score)
   }
+
+  useEffect(() => {
+    return () => {
+      if (soundManagerRef.current) {
+        soundManagerRef.current.cleanup()
+      }
+    }
+  }, [])
 
   return (
     <div className="relative w-full h-full">
@@ -1284,7 +1512,6 @@ export default function GameComponentNew({
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10">
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 overflow-hidden max-w-md w-full mx-4">
             
-            {/* Header */}
             <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-6">
               <div className="flex items-center justify-center gap-3">
                 <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">

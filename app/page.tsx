@@ -95,6 +95,7 @@ export default function Home() {
           />
         )}
       </div>
+      {/* Menu principal com música Eye of the Tiger */}
     </main>
   )
 }
