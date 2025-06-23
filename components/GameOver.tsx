@@ -49,8 +49,8 @@ export default function GameOver({ winner, score, round, difficulty, playerNickn
     }
   }
   const getMessage = () => {
-    if (isVictory) return "Congratulations! You are the Boxing Champion!"
-    if (isDraw) return "Great fight! It's a tie!"
+    if (isVictory) return "Parabéns! Você é o campeão!"
+    if (isDraw) return "Ótima luta! Foi um empate!"
   }
 
   const getDifficultyInfo = () => {
