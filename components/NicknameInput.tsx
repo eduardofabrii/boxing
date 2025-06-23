@@ -51,7 +51,7 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
   }
 
   return (
-    <div className="relative flex flex-col items-center gap-8 p-12 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
+    <div className="relative flex flex-col items-center gap-6 p-12 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 ">
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 mb-4">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
