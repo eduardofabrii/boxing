@@ -14,7 +14,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
   const [nickname, setNickname] = useState("")
   const [error, setError] = useState("")
 
-  // Carregar nickname do localStorage se existir
   useEffect(() => {
     const savedNickname = localStorage.getItem("boxingGameNickname")
     if (savedNickname) {
@@ -40,10 +39,8 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
       return
     }
 
-    // Salvar no localStorage
     localStorage.setItem("boxingGameNickname", nickname.trim())
     
-    // Continuar para seleção de dificuldade
     onContinue(nickname.trim())
   }
 
@@ -55,7 +52,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
 
   return (
     <div className="relative flex flex-col items-center gap-8 p-12 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 max-w-md w-full mx-4">
-      {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 mb-4">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
@@ -68,7 +64,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
         <p className="text-xl text-gray-300">Como você quer ser conhecido no ringue?</p>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="w-full space-y-6">
         <div className="space-y-3">
           <label htmlFor="nickname" className="block text-gray-300 font-medium text-sm">
@@ -102,7 +97,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex flex-col gap-4">
           <Button 
             type="submit"
@@ -117,7 +111,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
         </div>
       </form>
 
-      {/* Tips */}
       <div className="bg-gray-800/30 rounded-xl p-4 w-full border border-gray-600/30">
         <h3 className="text-sm font-bold text-gray-300 mb-2">💡 Dicas para o nickname:</h3>
         <ul className="text-xs text-gray-400 space-y-1">
@@ -128,7 +121,6 @@ export default function NicknameInput({ onBack, onContinue }: NicknameInputProps
         </ul>
       </div>
 
-      {/* Back Button */}
       <Button 
         className="w-full md:w-auto px-8 h-12 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border border-gray-500/50" 
         onClick={onBack}
